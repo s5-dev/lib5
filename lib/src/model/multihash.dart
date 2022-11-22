@@ -12,10 +12,7 @@ class Multihash {
   int get functionType => fullBytes[0];
   Uint8List get hashBytes => fullBytes.sublist(1);
 
-  Multihash(this.fullBytes) {
-    assert(functionType == mhashBlake3Default);
-    assert(hashBytes.length == 32);
-  }
+  Multihash(this.fullBytes);
 
   factory Multihash.fromBase64Url(String hash) {
     while (hash.length % 4 != 0) {
