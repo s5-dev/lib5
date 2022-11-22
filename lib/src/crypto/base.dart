@@ -31,4 +31,6 @@ class KeyPairEd25519 {
   Uint8List get publicKey {
     return Uint8List.fromList([mkeyEd25519] + _bytes.sublist(32));
   }
+
+  Uint8List extractBytes() => _bytes;
 }
