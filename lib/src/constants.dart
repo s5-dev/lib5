@@ -25,7 +25,7 @@ const metadataMagicByte = 0x5f;
 const metadataTypeMedia = 0x02;
 const metadataTypeDirectory = 0x03;
 
-const registryMaxDataSize = 64;
+const registryMaxDataSize = 48;
 
 // ! p2p protocol message types
 
@@ -50,7 +50,7 @@ const metadataExtensionChildren = 1;
 // List<String>, license identifier from https://spdx.org/licenses/
 const metadataExtensionLicenses = 11;
 
-// List<binary>, multicoded pubkey that references a registry entry that contains donation links and addresses
+// List<Uint8List>, multicoded pubkey that references a registry entry that contains donation links and addresses
 const metadataExtensionDonationKeys = 12;
 
 // map string->map, external ids of this object by their wikidata property id. Can be used to for example internet archive identifiers
@@ -81,7 +81,7 @@ const metadataExtensionBasicMediaMetadata = 22;
 
 // TODO comment to / reply to
 // TODO mentions
-// TODO Reposts just link the original item
+// TODO Reposts (just link the original item)
 
 // ! media details
 const metadataMediaDetailsDuration = 10;
