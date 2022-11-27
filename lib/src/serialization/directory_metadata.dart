@@ -20,29 +20,32 @@ DirectoryMetadata deserializeDirectoryMetadata(Uint8List bytes) {
 
   final dirname = u.unpackString();
 
-  final additionalMetadata = u.unpackMap().cast<int, dynamic>();
-
   final tryFiles = u.unpackList().cast<String>();
 
   final errorPages = u.unpackMap().cast<int, String>();
 
   final length = u.unpackInt()!;
 
-  final dm = DirectoryMetadata(
-    dirname: dirname,
-    tryFiles: tryFiles,
-    errorPages: errorPages,
-    additionalMetadata: AdditionalMetadata(additionalMetadata),
-    paths: {},
-  );
+  final Map<String, DirectoryMetadataFileReference> paths = {};
 
   for (int i = 0; i < length; i++) {
     final path = u.unpackString()!;
     final cid = CID.fromBytes(Uint8List.fromList(u.unpackBinary()));
-    dm.paths[path] = DirectoryMetadataFileReference(
+    paths[path] = DirectoryMetadataFileReference(
       cid: cid,
       contentType: u.unpackString(),
     );
   }
+
+  final additionalMetadata = u.unpackMap().cast<int, dynamic>();
+
+  final dm = DirectoryMetadata(
+    dirname: dirname,
+    tryFiles: tryFiles,
+    errorPages: errorPages,
+    paths: paths,
+    additionalMetadata: AdditionalMetadata(additionalMetadata),
+  );
+
   return dm;
 }
