@@ -4,7 +4,9 @@ import 'package:messagepack/messagepack.dart';
 
 import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/crypto/base.dart';
-import 'package:lib5/src/model/metadata.dart';
+import 'package:lib5/src/model/metadata/media.dart';
+import 'package:lib5/src/model/metadata/user.dart';
+import 'package:lib5/src/model/metadata/extra.dart';
 import 'package:lib5/src/util/bytes.dart';
 import 'package:lib5/src/util/endian.dart';
 import 'package:lib5/src/util/pack_anything.dart';
@@ -106,14 +108,14 @@ Future<MediaMetadata> deserializeMediaMetadata(
     }
   }
 
-  final additionalMetadata = u.unpackMap().cast<int, dynamic>();
+  final extraMetadata = u.unpackMap().cast<int, dynamic>();
 
   final mm = MediaMetadata(
     name: name ?? '',
     details: details,
     users: users,
     mediaTypes: mediaTypes,
-    additionalMetadata: AdditionalMetadata(additionalMetadata),
+    extraMetadata: ExtraMetadata(extraMetadata),
   );
 
   return mm;
@@ -141,7 +143,7 @@ Future<Uint8List> serializeMediaMetadata(
     c.packString(e.key);
     c.pack(e.value);
   }
-  c.pack(m.additionalMetadata.data);
+  c.pack(m.extraMetadata.data);
 
   final bodyBytes = c.takeBytes();
 

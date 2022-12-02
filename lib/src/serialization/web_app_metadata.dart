@@ -1,12 +1,12 @@
 import 'dart:typed_data';
 
 import 'package:messagepack/messagepack.dart';
-
+import 'package:lib5/src/model/metadata/extra.dart';
+import 'package:lib5/src/model/metadata/web_app.dart';
 import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/model/cid.dart';
-import 'package:lib5/src/model/metadata.dart';
 
-DirectoryMetadata deserializeDirectoryMetadata(Uint8List bytes) {
+WebAppMetadata deserializeWebAppMetadata(Uint8List bytes) {
   final u = Unpacker(bytes);
 
   final magicByte = u.unpackInt();
@@ -26,25 +26,25 @@ DirectoryMetadata deserializeDirectoryMetadata(Uint8List bytes) {
 
   final length = u.unpackInt()!;
 
-  final Map<String, DirectoryMetadataFileReference> paths = {};
+  final Map<String, WebAppMetadataFileReference> paths = {};
 
   for (int i = 0; i < length; i++) {
     final path = u.unpackString()!;
     final cid = CID.fromBytes(Uint8List.fromList(u.unpackBinary()));
-    paths[path] = DirectoryMetadataFileReference(
+    paths[path] = WebAppMetadataFileReference(
       cid: cid,
       contentType: u.unpackString(),
     );
   }
 
-  final additionalMetadata = u.unpackMap().cast<int, dynamic>();
+  final extraMetadata = u.unpackMap().cast<int, dynamic>();
 
-  final dm = DirectoryMetadata(
+  final dm = WebAppMetadata(
     dirname: dirname,
     tryFiles: tryFiles,
     errorPages: errorPages,
     paths: paths,
-    additionalMetadata: AdditionalMetadata(additionalMetadata),
+    extraMetadata: ExtraMetadata(extraMetadata),
   );
 
   return dm;

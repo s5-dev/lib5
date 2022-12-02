@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:lib5/src/model/metadata.dart';
+import 'package:lib5/src/model/metadata/media.dart';
 import 'package:messagepack/messagepack.dart';
 
 extension PackAnything on Packer {

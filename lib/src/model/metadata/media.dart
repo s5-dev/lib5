@@ -1,49 +1,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:base_codecs/base_codecs.dart';
-
 import 'package:lib5/src/constants.dart';
-import 'cid.dart';
+import 'package:lib5/src/model/cid.dart';
 
-class UserID {
-  int get type => bytes[0];
-  final Uint8List bytes;
-
-  UserID(this.bytes);
-
-  @override
-  String toString() {
-    return 'z${base58BitcoinEncode(bytes)}';
-  }
-}
-
-class MetadataUser {
-  final UserID userId;
-  final String? role;
-  final bool signed;
-
-  MetadataUser({
-    required this.userId,
-    required this.role,
-    required this.signed,
-  });
-
-  Map<String, dynamic> toJson() {
-    final map = <String, dynamic>{};
-    void addNotNull(String key, dynamic value) {
-      if (value != null) {
-        map[key] = value;
-      }
-    }
-
-    addNotNull('userId', userId.toString());
-    addNotNull('role', role);
-    addNotNull('signed', signed);
-
-    return map;
-  }
-}
+import 'base.dart';
+import 'extra.dart';
+import 'user.dart';
 
 class MediaMetadata extends Metadata {
   final String name;
@@ -54,14 +17,14 @@ class MediaMetadata extends Metadata {
 
   final MediaMetadataDetails details;
 
-  final AdditionalMetadata additionalMetadata;
+  final ExtraMetadata extraMetadata;
 
   MediaMetadata({
     required this.name,
     required this.details,
     required this.users,
     required this.mediaTypes,
-    required this.additionalMetadata,
+    required this.extraMetadata,
   });
 
   @override
@@ -71,7 +34,7 @@ class MediaMetadata extends Metadata {
         'details': details,
         'users': users,
         'mediaTypes': mediaTypes,
-        'additionalMetadata': additionalMetadata,
+        'extraMetadata': extraMetadata,
       };
 }
 
@@ -253,93 +216,4 @@ class MediaFormat {
 
     return map;
   }
-}
-
-// TODO Add proof support later
-class DirectoryMetadata extends Metadata {
-  final String? dirname;
-
-  final List<String> tryFiles;
-  final Map<int, String> errorPages;
-
-  final AdditionalMetadata additionalMetadata;
-
-  final Map<String, DirectoryMetadataFileReference> paths;
-
-  DirectoryMetadata({
-    required this.dirname,
-    required this.tryFiles,
-    required this.additionalMetadata,
-    required this.errorPages,
-    required this.paths,
-  });
-
-  @override
-  Map<String, dynamic> toJson() => {
-        'type': 'directory',
-        'dirname': dirname,
-        'tryFiles': tryFiles,
-        'errorPages':
-            errorPages.map((key, value) => MapEntry(key.toString(), value)),
-        'additionalMetadata': additionalMetadata,
-        'paths': paths,
-      };
-}
-
-class DirectoryMetadataFileReference {
-  final String? contentType;
-  int get size => cid.size ?? 0;
-  final CID cid;
-
-  DirectoryMetadataFileReference({
-    required this.cid,
-    required this.contentType,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'cid': cid.toBase64Url(),
-        'size': size,
-        'contentType': contentType,
-      };
-}
-
-class AdditionalMetadata {
-  final Map<int, dynamic> data;
-  AdditionalMetadata(this.data);
-
-  Map<String, dynamic> toJson() {
-    final map = <String, dynamic>{};
-    final names = {
-      metadataExtensionChildren: 'children',
-      metadataExtensionLicenses: 'licenses',
-      metadataExtensionDonationKeys: 'donationKeys',
-      metadataExtensionWikidataClaims: 'wikidataClaims',
-      metadataExtensionLanguages: 'languages',
-      metadataExtensionSourceUris: 'sourceUris',
-      metadataExtensionUpdateCID: 'updateCID',
-      metadataExtensionPreviousVersions: 'previousVersions',
-      metadataExtensionTimestamp: 'timestamp',
-      metadataExtensionTags: 'tags',
-      metadataExtensionCategories: 'categories',
-      metadataExtensionBasicMediaMetadata: 'basicMediaMetadata',
-      metadataExtensionViewTypes: 'viewTypes',
-    };
-    for (final e in data.entries) {
-      if (e.key == metadataExtensionWikidataClaims) {
-        map['wikidataClaims'] = {};
-        for (final e in e.value.entries) {
-          map['wikidataClaims'][e.key] =
-              e.value.map((v) => {'value': v[1]}).toList();
-        }
-      } else {
-        map[names[e.key]!] = e.value;
-      }
-    }
-
-    return map;
-  }
-}
-
-abstract class Metadata {
-  Map<String, dynamic> toJson();
 }
