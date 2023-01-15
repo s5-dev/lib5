@@ -7,6 +7,8 @@ const cidTypeMetadataMedia = 0xc5;
 const cidTypeMetadataWebApp = 0x59;
 const cidTypeResolver = 0x25;
 
+const cidTypeEncrypted = 0xae;
+
 // ! indicates that the registry entry contains a S5 CID
 const registryS5MagicByte = 0x5a;
 
@@ -16,6 +18,9 @@ const mhashBlake3Default = 0x1f;
 
 const mkeyEd25519 = 0xed;
 
+const encryptionAlgorithmXChaCha20Poly1305 = 0xa6;
+const encryptionAlgorithmXChaCha20Poly1305NonceSize = 24;
+
 // ! metadata files
 
 // used as the first byte of metadata files
@@ -23,9 +28,12 @@ const metadataMagicByte = 0x5f;
 
 // types for metadata files
 const metadataTypeMedia = 0x02;
-const metadataTypeDirectory = 0x03;
+const metadataTypeWebApp = 0x03;
+const metadataTypeDirectory = 0x04;
 
 const registryMaxDataSize = 48;
+
+const authPayloadVersion1 = 0x01;
 
 // ! p2p protocol message types
 
