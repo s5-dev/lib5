@@ -8,7 +8,9 @@ environment:
 
 dependencies:
   base_codecs: ^1.0.1
-  messagepack: ^0.2.1
+  http: ^0.13.5
+  messagepack:
+    git: https://github.com/redsolver/messagepack.git
 
 dev_dependencies:
   lints: ^2.0.0
