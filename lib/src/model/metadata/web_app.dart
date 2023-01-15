@@ -24,7 +24,7 @@ class WebAppMetadata extends Metadata {
 
   @override
   Map<String, dynamic> toJson() => {
-        'type': 'directory',
+        'type': 'web_app',
         'dirname': dirname,
         'tryFiles': tryFiles,
         'errorPages':

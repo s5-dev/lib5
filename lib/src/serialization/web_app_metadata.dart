@@ -14,7 +14,7 @@ WebAppMetadata deserializeWebAppMetadata(Uint8List bytes) {
     throw 'Invalid metadata: Unsupported magic byte';
   }
   final typeAndVersion = u.unpackInt();
-  if (typeAndVersion != metadataTypeDirectory) {
+  if (typeAndVersion != metadataTypeWebApp) {
     throw 'Invalid metadata: Wrong metadata type';
   }
 
@@ -30,7 +30,7 @@ WebAppMetadata deserializeWebAppMetadata(Uint8List bytes) {
 
   for (int i = 0; i < length; i++) {
     final path = u.unpackString()!;
-    final cid = CID.fromBytes(Uint8List.fromList(u.unpackBinary()));
+    final cid = CID.fromBytes(u.unpackBinary());
     paths[path] = WebAppMetadataFileReference(
       cid: cid,
       contentType: u.unpackString(),
