@@ -6,6 +6,7 @@ abstract class CryptoImplementation {
   Uint8List generateRandomBytes(int length);
 
   Future<Uint8List> hashBlake3(Uint8List input);
+  Uint8List hashBlake3Sync(Uint8List input);
 
   Future<bool> verifyEd25519({
     required Uint8List pk,
@@ -20,6 +21,18 @@ abstract class CryptoImplementation {
 
   Future<KeyPairEd25519> newKeyPairEd25519({
     required Uint8List seed,
+  });
+
+  Future<Uint8List> encryptXChaCha20Poly1305({
+    required Uint8List key,
+    required Uint8List nonce,
+    required Uint8List plaintext,
+  });
+
+  Future<Uint8List> decryptXChaCha20Poly1305({
+    required Uint8List key,
+    required Uint8List nonce,
+    required Uint8List ciphertext,
   });
 }
 
