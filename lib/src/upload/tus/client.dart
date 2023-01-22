@@ -106,8 +106,6 @@ class S5TusClient {
         "Upload-Length": "$_fileSize",
       });
 
-    print('createHeaders $createHeaders');
-
     final response = await client.post(url, headers: createHeaders);
     if (!(response.statusCode >= 200 && response.statusCode < 300) &&
         response.statusCode != 404) {
@@ -121,11 +119,8 @@ class S5TusClient {
           "missing upload Uri in response for creating upload");
     }
 
-    // print('urlStr $urlStr');
-
     _uploadUrl = _parseUrl(urlStr);
 
-    // print('_uploadUrl $_uploadUrl');
     store?.set(_fingerprint, _uploadUrl as Uri);
   }
 
@@ -168,8 +163,7 @@ class S5TusClient {
 
     int retryCount = 0;
 
-    while (!_pauseUpload && (_offset ?? 0) < totalBytes) {
-      //print('_offset $_offset');
+    while (!_pauseUpload && _offset < totalBytes) {
       StreamSubscription? sub;
       try {
         if (!isFirstUploadRequest) {
@@ -184,17 +178,16 @@ class S5TusClient {
             "Content-Type": "application/offset+octet-stream"
           });
 
-        print('HTTP PATCH start $_uploadUrl');
-
         var uploadedLength = 0;
 
-        var stream = http.ByteStream(openRead(_offset!).transform(
+        var stream = http.ByteStream(openRead(_offset).transform(
           StreamTransformer.fromHandlers(
             handleData: (data, sink) {
               uploadedLength += data.length;
               sink.add(data);
             },
             handleError: (error, stack, sink) {
+              // TODO Proper error handling
               print(error.toString());
             },
             handleDone: (sink) {
