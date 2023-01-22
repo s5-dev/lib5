@@ -16,4 +16,7 @@ class StorageServiceConfig {
   Uri getAccountsAPIUrl(String path) {
     return Uri.parse('$scheme://account.$authority$path');
   }
+
+  @override
+  toString() => getAPIUrl('').toString();
 }
