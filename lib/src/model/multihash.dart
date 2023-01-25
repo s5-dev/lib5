@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:base_codecs/base_codecs.dart';
 
-import 'package:lib5/src/constants.dart';
+import 'package:lib5/src/util/base64.dart';
 import 'package:lib5/src/util/bytes.dart';
 
 class Multihash {
@@ -27,7 +27,7 @@ class Multihash {
   }
 
   String toBase64Url() {
-    return base64Url.encode(fullBytes).replaceAll('=', '');
+    return base64UrlNoPaddingEncode(fullBytes);
   }
 
   String toBase32() {

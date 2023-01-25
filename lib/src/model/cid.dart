@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:base_codecs/base_codecs.dart';
 
 import 'package:lib5/src/constants.dart';
+import 'package:lib5/src/util/base64.dart';
 import 'package:lib5/src/util/endian.dart';
 import 'multihash.dart';
 
@@ -63,8 +64,11 @@ class CID {
     if (type == cidTypeRaw) {
       var sizeBytes = encodeEndian(size!, 8);
 
-      while (sizeBytes.last == 0) {
+      while (sizeBytes.isNotEmpty && sizeBytes.last == 0) {
         sizeBytes = sizeBytes.sublist(0, sizeBytes.length - 1);
+      }
+      if (sizeBytes.isEmpty) {
+        sizeBytes = Uint8List(1);
       }
 
       return Uint8List.fromList(
@@ -94,7 +98,7 @@ class CID {
   }
 
   String toBase64Url() {
-    return 'u${base64Url.encode(toBytes()).replaceAll('=', '')}';
+    return 'u${base64UrlNoPaddingEncode(toBytes())}';
   }
 
   @override
