@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
-import 'package:lib5/lib5.dart';
+import 'package:lib5/src/crypto/base.dart';
+import 'package:lib5/src/registry/entry.dart';
 import 'package:lib5/src/util/endian.dart';
 
 Future<bool> verifyRegistryEntry(
