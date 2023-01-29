@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:lib5/src/identity/constants.dart';
 import 'package:lib5/src/identity/identity.dart';
 import 'package:lib5/src/storage_service/config.dart';
 import 'package:lib5/src/storage_service/sign_challenge.dart';
@@ -18,7 +19,7 @@ Future<String> login({
 }) async {
   final crypto = identity.api.crypto;
 
-  final portalAccountRootSeed = identity.subSeeds[storageServiceAccountTweak]!;
+  final portalAccountRootSeed = identity.subSeeds[storageServiceAccountsTweak]!;
 
   final portalAccountSeed = await crypto.hashBlake3(
     Uint8List.fromList(
