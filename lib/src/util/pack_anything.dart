@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:lib5/src/model/metadata/directory.dart';
 import 'package:lib5/src/model/metadata/media.dart';
 import 'package:messagepack/messagepack.dart';
 
@@ -29,6 +30,12 @@ extension PackAnything on Packer {
         pack(e.value);
       }
     } else if (v is MediaFormat) {
+      pack(v.encode());
+    } else if (v is DirectoryReference) {
+      pack(v.encode());
+    } else if (v is FileReference) {
+      pack(v.encode());
+    } else if (v is FileVersion) {
       pack(v.encode());
     } else {
       throw 'Could not pack ${v.runtimeType}';
