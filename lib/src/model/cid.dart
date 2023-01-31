@@ -5,6 +5,7 @@ import 'package:base_codecs/base_codecs.dart';
 
 import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/util/base64.dart';
+import 'package:lib5/src/util/bytes.dart';
 import 'package:lib5/src/util/endian.dart';
 import 'multihash.dart';
 
@@ -104,5 +105,22 @@ class CID {
   @override
   String toString() {
     return toBase58();
+  }
+
+  @override
+  bool operator ==(Object other) {
+    if (other is! CID) {
+      return false;
+    }
+    return areBytesEqual(toBytes(), other.toBytes());
+  }
+
+  @override
+  int get hashCode {
+    final fullBytes = toBytes();
+    return fullBytes[0] +
+        (fullBytes[1] * 256) +
+        (fullBytes[2] * 256 * 256) +
+        (fullBytes[3] * 256 * 256 * 256);
   }
 }
