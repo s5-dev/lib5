@@ -65,7 +65,7 @@ class S5TusClient {
 
   bool _pauseUpload = false;
 
-  Future? _chunkPatchFuture;
+  final Stream<void>? onCancel;
 
   S5TusClient({
     required this.url,
@@ -73,6 +73,7 @@ class S5TusClient {
     required this.fileLength,
     required this.openRead,
     required this.hash,
+    this.onCancel,
     this.store,
     this.headers,
     // this.metadata = const {},
@@ -161,6 +162,14 @@ class S5TusClient {
     // start upload
     final client = httpClient;
 
+    bool isCanceled = false;
+    EventSink<List<int>>? eventSink;
+
+    final cancelSub = onCancel?.listen((_) {
+      isCanceled = true;
+      eventSink?.close();
+    });
+
     int retryCount = 0;
 
     while (!_pauseUpload && _offset < totalBytes) {
@@ -185,6 +194,9 @@ class S5TusClient {
             handleData: (data, sink) {
               uploadedLength += data.length;
               sink.add(data);
+              if (eventSink == null) {
+                eventSink = sink;
+              }
             },
             handleError: (error, stack, sink) {
               // TODO Proper error handling
@@ -207,8 +219,6 @@ class S5TusClient {
         }
 
         final response = await client.send(req);
-
-        _chunkPatchFuture = null;
 
         sub?.cancel();
 
@@ -236,10 +246,17 @@ class S5TusClient {
         // TODO Proper error handling
 
         sub?.cancel();
+
+        if (isCanceled) {
+          cancelSub?.cancel();
+          throw S5TusClientCancelException();
+        }
+
         _offset = _offsetBackup;
 
         retryCount++;
         if (retryCount > 10) {
+          cancelSub?.cancel();
           throw 'Too many retries. ($e $st)';
         }
 
@@ -247,6 +264,7 @@ class S5TusClient {
         await Future.delayed(Duration(seconds: pow(2, retryCount).round()));
       }
     }
+    cancelSub?.cancel();
     store?.remove(_fingerprint);
     return '';
   }
@@ -371,3 +389,5 @@ class TusMemoryStore implements TusStore {
     store.remove(fingerprint);
   }
 }
+
+class S5TusClientCancelException implements Exception {}
