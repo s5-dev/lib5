@@ -7,7 +7,6 @@ class ExtraMetadata {
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{};
     final names = {
-      metadataExtensionChildren: 'children',
       metadataExtensionLicenses: 'licenses',
       metadataExtensionDonationKeys: 'donationKeys',
       metadataExtensionWikidataClaims: 'wikidataClaims',
@@ -20,6 +19,7 @@ class ExtraMetadata {
       metadataExtensionCategories: 'categories',
       metadataExtensionBasicMediaMetadata: 'basicMediaMetadata',
       metadataExtensionViewTypes: 'viewTypes',
+      metadataExtensionBridge: 'bridge',
     };
     for (final e in data.entries) {
       if (e.key == metadataExtensionWikidataClaims) {
