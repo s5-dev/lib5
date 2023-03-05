@@ -32,6 +32,7 @@ const metadataMagicByte = 0x5f;
 const metadataTypeMedia = 0x02;
 const metadataTypeWebApp = 0x03;
 const metadataTypeDirectory = 0x04;
+const metadataTypeProofs = 0x05;
 
 const registryMaxDataSize = 48;
 
@@ -44,18 +45,14 @@ const protocolMethodHandshakeDone = 2;
 
 const protocolMethodSignedMessage = 10;
 
-const protocolMethodHashQueryResponse = 5;
 const protocolMethodHashQuery = 4;
-
-const protocolMethodAnnouncePeers = 7;
-
-const protocolMethodRegistryUpdate = 12;
+const protocolMethodAnnouncePeers = 8;
 const protocolMethodRegistryQuery = 13;
 
-// ! Some optional metadata extensions (same for files, media files and directories)
+const recordTypeStorageLocation = 0x05;
+const recordTypeRegistryEntry = 0x07;
 
-// List<SpecialObject> (with CIDs)
-const metadataExtensionChildren = 1;
+// ! Some optional metadata extensions (same for files, media files and directories)
 
 // List<String>, license identifier from https://spdx.org/licenses/
 const metadataExtensionLicenses = 11;
@@ -63,7 +60,7 @@ const metadataExtensionLicenses = 11;
 // List<Uint8List>, multicoded pubkey that references a registry entry that contains donation links and addresses
 const metadataExtensionDonationKeys = 12;
 
-// map string->map, external ids of this object by their wikidata property id. Can be used to for example internet archive identifiers
+// map string->map, external ids of this object by their wikidata property id.
 const metadataExtensionWikidataClaims = 13;
 
 // List<String>, for example [en, de, de-DE]
@@ -89,13 +86,22 @@ const metadataExtensionViewTypes = 21;
 
 const metadataExtensionBasicMediaMetadata = 22;
 
+const metadataExtensionBridge = 23;
+
 // TODO comment to / reply to
 // TODO mentions
 // TODO Reposts (just link the original item)
 
 // ! media details
 const metadataMediaDetailsDuration = 10;
+const metadataMediaDetailsIsLive = 11;
 
 // ! metadata proofs
 const metadataProofTypeSignature = 1;
 const metadataProofTypeTimestamp = 2;
+
+// ! storage locations
+const storageLocationTypeArchive = 0;
+const storageLocationTypeFile = 3;
+const storageLocationTypeFull = 5;
+const storageLocationTypeBridge = 7;
