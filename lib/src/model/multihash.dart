@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:base_codecs/base_codecs.dart';
+import 'package:lib5/src/constants.dart';
 
 import 'package:lib5/src/util/base64.dart';
 import 'package:lib5/src/util/bytes.dart';
@@ -36,7 +37,9 @@ class Multihash {
 
   @override
   String toString() {
-    return toBase64Url();
+    return functionType == cidTypeBridge
+        ? utf8.decode(fullBytes)
+        : toBase64Url();
   }
 
   @override

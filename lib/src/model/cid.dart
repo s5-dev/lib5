@@ -32,6 +32,8 @@ class CID {
         str = '$str=';
       }
       bytes = base64Url.decode(str);
+    } else if (cid[0] == ':') {
+      bytes = Uint8List.fromList(utf8.encode(cid));
     } else {
       throw 'Encoding not supported';
     }
@@ -43,13 +45,28 @@ class CID {
     _init(bytes);
   }
 
+  factory CID.bridge(String id) {
+    return CID(
+      cidTypeBridge,
+      Multihash(
+        Uint8List.fromList(
+          [cidTypeBridge] + utf8.encode(id),
+        ),
+      ),
+    );
+  }
+
   void _init(Uint8List bytes) {
     type = bytes[0];
-    hash = Multihash(bytes.sublist(1, 34));
+    if (type == cidTypeBridge) {
+      hash = Multihash(bytes);
+    } else {
+      hash = Multihash(bytes.sublist(1, 34));
 
-    final sizeBytes = bytes.sublist(34);
-    if (sizeBytes.isNotEmpty) {
-      size = decodeEndian(sizeBytes);
+      final sizeBytes = bytes.sublist(34);
+      if (sizeBytes.isNotEmpty) {
+        size = decodeEndian(sizeBytes);
+      }
     }
   }
 
@@ -62,7 +79,9 @@ class CID {
   }
 
   Uint8List toBytes() {
-    if (type == cidTypeRaw) {
+    if (type == cidTypeBridge) {
+      return hash.fullBytes;
+    } else if (type == cidTypeRaw) {
       var sizeBytes = encodeEndian(size!, 8);
 
       while (sizeBytes.isNotEmpty && sizeBytes.last == 0) {
@@ -104,7 +123,7 @@ class CID {
 
   @override
   String toString() {
-    return toBase58();
+    return type == cidTypeBridge ? utf8.decode(hash.fullBytes) : toBase58();
   }
 
   @override

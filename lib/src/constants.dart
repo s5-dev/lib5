@@ -7,6 +7,8 @@ const cidTypeMetadataMedia = 0xc5;
 const cidTypeMetadataWebApp = 0x59;
 const cidTypeResolver = 0x25;
 
+const cidTypeBridge = 0x3a;
+
 const cidTypeEncrypted = 0xae;
 
 // ! indicates that the registry entry contains a S5 CID
