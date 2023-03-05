@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:base_codecs/base_codecs.dart';
+
+import 'package:lib5/src/constants.dart';
 
 class UserID {
   int get type => bytes[0];
@@ -10,7 +13,9 @@ class UserID {
 
   @override
   String toString() {
-    return 'z${base58BitcoinEncode(bytes)}';
+    return type == cidTypeBridge
+        ? utf8.decode(bytes)
+        : 'z${base58BitcoinEncode(bytes)}';
   }
 }
 
