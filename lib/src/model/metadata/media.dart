@@ -17,6 +17,8 @@ class MediaMetadata extends Metadata {
 
   final MediaMetadataDetails details;
 
+  final MediaMetadataLinks? links;
+
   final ExtraMetadata extraMetadata;
 
   MediaMetadata({
@@ -24,6 +26,7 @@ class MediaMetadata extends Metadata {
     required this.details,
     required this.users,
     required this.mediaTypes,
+    this.links,
     required this.extraMetadata,
   });
 
@@ -34,8 +37,70 @@ class MediaMetadata extends Metadata {
         'details': details,
         'users': users,
         'mediaTypes': mediaTypes,
+        'links': links,
         'extraMetadata': extraMetadata,
       };
+}
+
+class MediaMetadataLinks {
+  late final int count;
+  late final List<CID> head;
+  late final List<CID>? collapsed;
+  late final List<CID>? tail;
+
+  MediaMetadataLinks(this.head) {
+    count = head.length;
+    collapsed = null;
+    tail = null;
+  }
+
+  toJson() {
+    final map = {
+      'count': count,
+      'head': head.map((e) => e.toString()).toList(),
+    };
+    if (collapsed != null) {
+      map['collapsed'] = collapsed!.map((e) => e.toString()).toList();
+    }
+    if (tail != null) {
+      map['tail'] = tail!.map((e) => e.toString()).toList();
+    }
+    return map;
+  }
+
+  MediaMetadataLinks.decode(Map<int, dynamic> links) {
+    count = links[1] as int;
+    head = (links[2].cast<Uint8List>())
+        .map<CID>((bytes) => CID.fromBytes(bytes))
+        .toList();
+    collapsed = links[3] == null
+        ? null
+        : (links[3].cast<Uint8List>())
+            .map<CID>((bytes) => CID.fromBytes(bytes))
+            .toList();
+    tail = links[4] == null
+        ? null
+        : (links[4].cast<Uint8List>())
+            .map<CID>((bytes) => CID.fromBytes(bytes))
+            .toList();
+  }
+
+  Map<int, dynamic> encode() {
+    final map = <int, dynamic>{
+      1: count,
+      2: head,
+    };
+    void addNotNull(int key, dynamic value) {
+      if (value != null) {
+        map[key] = value;
+      }
+    }
+
+    addNotNull(3, collapsed);
+    addNotNull(4, tail);
+
+    return map;
+  }
 }
 
 class MediaMetadataDetails {
@@ -47,6 +112,7 @@ class MediaMetadataDetails {
     final map = <String, dynamic>{};
     final names = {
       metadataMediaDetailsDuration: 'duration',
+      metadataMediaDetailsIsLive: 'live',
     };
     for (final e in data.entries) {
       map[names[e.key]!] = e.value;
@@ -57,6 +123,7 @@ class MediaMetadataDetails {
 
   /// duration of media file in seconds
   double? get duration => data[metadataMediaDetailsDuration];
+  bool get isLive => data[metadataMediaDetailsIsLive];
 }
 
 class MediaFormat {
@@ -74,9 +141,9 @@ class MediaFormat {
   // TODO Maybe change types
   int? asr;
   double? fps;
-  double? tbr;
-  double? abr;
-  double? vbr;
+  int? tbr;
+  int? abr;
+  int? vbr;
   int? audioChannels;
   String? vcodec;
   String? acodec;
@@ -93,6 +160,9 @@ class MediaFormat {
   int? rows;
   int? columns;
   int? index;
+
+  String? initRange;
+  String? indexRange;
 
   MediaFormat({
     required this.subtype,
@@ -118,6 +188,8 @@ class MediaFormat {
     this.rows,
     this.columns,
     this.index,
+    this.initRange,
+    this.indexRange,
   });
 
   MediaFormat.decode(Map<int, dynamic> data) {
@@ -145,6 +217,8 @@ class MediaFormat {
     rows = data[26];
     columns = data[27];
     index = data[28];
+    initRange = data[29];
+    indexRange = data[30];
   }
 
   Map<int, dynamic> encode() {
@@ -178,6 +252,8 @@ class MediaFormat {
     addNotNull(26, rows);
     addNotNull(27, columns);
     addNotNull(28, index);
+    addNotNull(29, initRange);
+    addNotNull(30, indexRange);
 
     return map;
   }
@@ -213,6 +289,8 @@ class MediaFormat {
     addNotNull('rows', rows);
     addNotNull('columns', columns);
     addNotNull('index', index);
+    addNotNull('initRange', initRange);
+    addNotNull('indexRange', indexRange);
 
     return map;
   }
