@@ -1,7 +1,9 @@
 import 'dart:typed_data';
 
+import 'package:lib5/src/model/cid.dart';
 import 'package:lib5/src/model/metadata/directory.dart';
 import 'package:lib5/src/model/metadata/media.dart';
+import 'package:lib5/src/model/node_id.dart';
 import 'package:messagepack/messagepack.dart';
 
 extension PackAnything on Packer {
@@ -37,6 +39,10 @@ extension PackAnything on Packer {
       pack(v.encode());
     } else if (v is FileVersion) {
       pack(v.encode());
+    } else if (v is CID) {
+      pack(v.toBytes());
+    } else if (v is NodeID) {
+      pack(v.bytes);
     } else {
       throw 'Could not pack ${v.runtimeType}';
     }
