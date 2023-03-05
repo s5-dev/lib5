@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/crypto/base.dart';
 import 'package:lib5/src/registry/entry.dart';
 import 'package:lib5/src/util/endian.dart';
@@ -11,6 +12,7 @@ Future<SignedRegistryEntry> signRegistryEntry({
   required CryptoImplementation crypto,
 }) async {
   final list = Uint8List.fromList([
+    recordTypeRegistryEntry,
     ...encodeEndian(revision, 8),
     data.length, // 1 byte
     ...data,
