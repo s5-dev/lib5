@@ -18,6 +18,8 @@ WebAppMetadata deserializeWebAppMetadata(Uint8List bytes) {
     throw 'Invalid metadata: Wrong metadata type';
   }
 
+  u.unpackListLength();
+
   final dirname = u.unpackString();
 
   final tryFiles = u.unpackList().cast<String>();

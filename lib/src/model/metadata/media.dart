@@ -121,8 +121,8 @@ class MediaMetadataDetails {
     return map;
   }
 
-  /// duration of media file in seconds
-  double? get duration => data[metadataMediaDetailsDuration];
+  /// duration of media file in milliseconds
+  int? get duration => data[metadataMediaDetailsDuration];
   bool get isLive => data[metadataMediaDetailsIsLive];
 }
 
@@ -130,7 +130,7 @@ class MediaFormat {
   late final String subtype;
   late final String?
       role; // thumbnail, storyboard, lyrics, subtitle, description, ...
-  late final String ext;
+  late final String? ext;
   late final CID? cid;
 
   int? height;
@@ -140,10 +140,10 @@ class MediaFormat {
 
   // TODO Maybe change types
   int? asr;
-  double? fps;
-  int? tbr;
-  int? abr;
-  int? vbr;
+  int? fps;
+  int? bitrate;
+  // int? abr;
+  // int? vbr;
   int? audioChannels;
   String? vcodec;
   String? acodec;
@@ -156,7 +156,9 @@ class MediaFormat {
 
   String? get valueAsString => value == null ? null : utf8.decode(value!);
 
-  double? duration;
+  // in milliseconds
+  int? duration;
+
   int? rows;
   int? columns;
   int? index;
@@ -166,17 +168,15 @@ class MediaFormat {
 
   MediaFormat({
     required this.subtype,
-    required this.role,
-    required this.ext,
-    required this.cid,
+    this.role,
+    this.ext,
+    this.cid,
     this.height,
     this.width,
     this.languages,
     this.asr,
     this.fps,
-    this.tbr,
-    this.abr,
-    this.vbr,
+    this.bitrate,
     this.audioChannels,
     this.vcodec,
     this.acodec,
@@ -202,9 +202,7 @@ class MediaFormat {
     languages = data[12]?.cast<String>();
     asr = data[13];
     fps = data[14];
-    tbr = data[15];
-    abr = data[16];
-    vbr = data[17];
+    bitrate = data[15];
     audioChannels = data[18];
     vcodec = data[19];
     acodec = data[20];
@@ -238,9 +236,9 @@ class MediaFormat {
     addNotNull(12, languages);
     addNotNull(13, asr);
     addNotNull(14, fps);
-    addNotNull(15, tbr);
-    addNotNull(16, abr);
-    addNotNull(17, vbr);
+    addNotNull(15, bitrate);
+    // addNotNull(16, abr);
+    // addNotNull(17, vbr);
     addNotNull(18, audioChannels);
     addNotNull(19, vcodec);
     addNotNull(20, acodec);
@@ -275,9 +273,9 @@ class MediaFormat {
     addNotNull('languages', languages);
     addNotNull('asr', asr);
     addNotNull('fps', fps);
-    addNotNull('tbr', tbr);
-    addNotNull('abr', abr);
-    addNotNull('vbr', vbr);
+    addNotNull('bitrate', bitrate);
+    // addNotNull('abr', abr);
+    // addNotNull('vbr', vbr);
     addNotNull('audioChannels', audioChannels);
     addNotNull('vcodec', vcodec);
     addNotNull('acodec', acodec);

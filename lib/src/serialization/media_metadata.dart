@@ -26,14 +26,16 @@ Future<MediaMetadata> deserializeMediaMetadata(
   final provenUserIds = <String>[];
 
   if (typeAndVersion == metadataTypeProofs) {
-    final proofSectionLength = decodeEndian(bytes.sublist(2, 6));
+    final proofSectionLength = decodeEndian(bytes.sublist(2, 4));
 
-    bodyBytes = bytes.sublist(6 + proofSectionLength);
+    bodyBytes = bytes.sublist(4 + proofSectionLength);
 
     if (proofSectionLength > 0) {
-      final proofUnpacker = Unpacker(bytes.sublist(6, proofSectionLength + 6));
+      final proofUnpacker = Unpacker(bytes.sublist(4, proofSectionLength + 4));
 
-      final b3hash = await crypto.hashBlake3(bodyBytes);
+      final b3hash = Uint8List.fromList(
+        [mhashBlake3Default] + await crypto.hashBlake3(bodyBytes),
+      );
 
       final proofCount = proofUnpacker.unpackListLength();
 
@@ -43,11 +45,11 @@ Future<MediaMetadata> deserializeMediaMetadata(
 
         if (proofType == metadataProofTypeSignature) {
           final pubkey = Uint8List.fromList(parts[1] as List<int>);
-          final mhash = Uint8List.fromList(parts[2] as List<int>);
+          final mhashType = parts[2] as int;
           final signature = Uint8List.fromList(parts[3] as List<int>);
 
-          if (!areBytesEqual(mhash.sublist(1), b3hash)) {
-            throw 'Invalid hash';
+          if (mhashType != mhashBlake3Default) {
+            throw 'Hash type $mhashType not supported';
           }
 
           if (pubkey[0] != mkeyEd25519) {
@@ -58,7 +60,7 @@ Future<MediaMetadata> deserializeMediaMetadata(
           }
 
           final isValid = await crypto.verifyEd25519(
-            message: mhash,
+            message: b3hash,
             signature: signature,
             pk: pubkey.sublist(1),
           );
@@ -86,6 +88,8 @@ Future<MediaMetadata> deserializeMediaMetadata(
   if (type != metadataTypeMedia) {
     throw 'Invalid metadata: Unsupported type $type';
   }
+
+  u.unpackListLength();
 
   final name = u.unpackString();
 
@@ -138,6 +142,8 @@ Future<Uint8List> serializeMediaMetadata(
 }) async {
   final c = Packer();
   c.packInt(metadataTypeMedia);
+
+  c.packListLength(6);
 
   c.packString(m.name);
   c.pack(m.details.data);
@@ -193,8 +199,8 @@ Future<Uint8List> serializeMediaMetadata(
     );
     proofPacker.pack([
       metadataProofTypeSignature,
+      mhashBlake3Default,
       kp.publicKey,
-      b3hash,
       signature,
     ]);
   }
@@ -204,7 +210,7 @@ Future<Uint8List> serializeMediaMetadata(
         metadataMagicByte,
         metadataTypeProofs,
       ] +
-      encodeEndian(proofBytes.length, 4);
+      encodeEndian(proofBytes.length, 2);
 
   return Uint8List.fromList(header + proofBytes + bodyBytes);
 }
