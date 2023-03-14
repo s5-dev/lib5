@@ -7,6 +7,8 @@ const cidTypeMetadataMedia = 0xc5;
 const cidTypeMetadataWebApp = 0x59;
 const cidTypeResolver = 0x25;
 
+const cidTypeUserIdentity = 0x77;
+
 const cidTypeBridge = 0x3a;
 
 const cidTypeEncrypted = 0xae;
@@ -33,10 +35,19 @@ const metadataTypeMedia = 0x02;
 const metadataTypeWebApp = 0x03;
 const metadataTypeDirectory = 0x04;
 const metadataTypeProofs = 0x05;
+const metadataTypeUserIdentity = 0x07;
+
+const parentLinkTypeUserIdentity = 1;
 
 const registryMaxDataSize = 48;
 
+// ! user identity
+
 const authPayloadVersion1 = 0x01;
+
+const userIdentityLinkProfile = 0x00;
+const userIdentityLinkPublicFileSystem = 0x01;
+// const userIdentityLinkFollowingList = 0x02;
 
 // ! p2p protocol message types
 
