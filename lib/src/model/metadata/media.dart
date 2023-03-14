@@ -6,14 +6,14 @@ import 'package:lib5/src/model/cid.dart';
 
 import 'base.dart';
 import 'extra.dart';
-import 'user.dart';
+import 'parent.dart';
 
 class MediaMetadata extends Metadata {
   final String name;
 
   final Map<String, List<MediaFormat>> mediaTypes;
 
-  final List<MetadataUser> users;
+  final List<MetadataParentLink> parents;
 
   final MediaMetadataDetails details;
 
@@ -24,7 +24,7 @@ class MediaMetadata extends Metadata {
   MediaMetadata({
     required this.name,
     required this.details,
-    required this.users,
+    required this.parents,
     required this.mediaTypes,
     this.links,
     required this.extraMetadata,
@@ -35,7 +35,7 @@ class MediaMetadata extends Metadata {
         'type': 'media',
         'name': name,
         'details': details,
-        'users': users,
+        'parents': parents,
         'mediaTypes': mediaTypes,
         'links': links,
         'extraMetadata': extraMetadata,

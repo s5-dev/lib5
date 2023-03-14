@@ -1,13 +1,14 @@
 import 'dart:typed_data';
 
+import 'package:lib5/src/model/cid.dart';
+import 'package:lib5/src/model/multihash.dart';
 import 'package:messagepack/messagepack.dart';
 
 import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/crypto/base.dart';
 import 'package:lib5/src/model/metadata/media.dart';
-import 'package:lib5/src/model/metadata/user.dart';
+import 'package:lib5/src/model/metadata/parent.dart';
 import 'package:lib5/src/model/metadata/extra.dart';
-import 'package:lib5/src/util/bytes.dart';
 import 'package:lib5/src/util/endian.dart';
 import 'package:lib5/src/util/pack_anything.dart';
 
@@ -23,7 +24,7 @@ Future<MediaMetadata> deserializeMediaMetadata(
 
   final Uint8List bodyBytes;
 
-  final provenUserIds = <String>[];
+  final provenPubKeys = <Multihash>[];
 
   if (typeAndVersion == metadataTypeProofs) {
     final proofSectionLength = decodeEndian(bytes.sublist(2, 4));
@@ -40,13 +41,13 @@ Future<MediaMetadata> deserializeMediaMetadata(
       final proofCount = proofUnpacker.unpackListLength();
 
       for (int i = 0; i < proofCount; i++) {
-        final parts = proofUnpacker.unpackList();
+        final List<dynamic> parts = proofUnpacker.unpackList();
         final proofType = parts[0] as int;
 
         if (proofType == metadataProofTypeSignature) {
-          final pubkey = Uint8List.fromList(parts[1] as List<int>);
-          final mhashType = parts[2] as int;
-          final signature = Uint8List.fromList(parts[3] as List<int>);
+          final mhashType = parts[1] as int;
+          final pubkey = parts[2] as Uint8List;
+          final signature = parts[3] as Uint8List;
 
           if (mhashType != mhashBlake3Default) {
             throw 'Hash type $mhashType not supported';
@@ -68,7 +69,7 @@ Future<MediaMetadata> deserializeMediaMetadata(
           if (!isValid) {
             throw 'Invalid signature found';
           }
-          provenUserIds.add(String.fromCharCodes(pubkey));
+          provenPubKeys.add(Multihash(pubkey));
         } else {
           // ! Unsupported proof type
         }
@@ -95,17 +96,18 @@ Future<MediaMetadata> deserializeMediaMetadata(
 
   final details = MediaMetadataDetails(u.unpackMap().cast<int, dynamic>());
 
-  final users = <MetadataUser>[];
+  final parents = <MetadataParentLink>[];
   final userCount = u.unpackListLength();
   for (int i = 0; i < userCount; i++) {
     final m = u.unpackMap();
 
-    final userId = UserID(Uint8List.fromList(m[1] as List<int>));
+    final cid = CID.fromBytes(m[1] as Uint8List);
 
-    users.add(MetadataUser(
-      userId: userId,
+    parents.add(MetadataParentLink(
+      cid: cid,
       role: m[2] as String?,
-      signed: provenUserIds.contains(String.fromCharCodes(userId.bytes)),
+      type: (m[0] ?? parentLinkTypeUserIdentity) as int,
+      signed: provenPubKeys.contains(cid.hash),
     ));
   }
 
@@ -128,7 +130,7 @@ Future<MediaMetadata> deserializeMediaMetadata(
   return MediaMetadata(
     name: name ?? '',
     details: details,
-    users: users,
+    parents: parents,
     mediaTypes: mediaTypes,
     links: links.isEmpty ? null : MediaMetadataLinks.decode(links),
     extraMetadata: ExtraMetadata(extraMetadata),
@@ -148,21 +150,14 @@ Future<Uint8List> serializeMediaMetadata(
   c.packString(m.name);
   c.pack(m.details.data);
 
-  if (keyPairs.isNotEmpty) {
-    c.packListLength(keyPairs.length);
-    for (final kp in keyPairs) {
-      c.pack({
-        1: kp.publicKey,
-      });
-    }
-  } else {
-    c.packListLength(m.users.length);
-    for (final user in m.users) {
-      c.pack({
-        1: user.userId.bytes,
-      });
-    }
+  c.packListLength(m.parents.length);
+  for (final parent in m.parents) {
+    c.pack({
+      0: parent.type,
+      1: parent.cid.toBytes(),
+    });
   }
+  // }
 
   c.packMapLength(m.mediaTypes.length);
   for (final e in m.mediaTypes.entries) {

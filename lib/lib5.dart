@@ -10,6 +10,7 @@ export 'src/model/metadata/base.dart';
 export 'src/model/metadata/media.dart';
 export 'src/model/metadata/web_app.dart';
 export 'src/model/metadata/directory.dart';
+export 'src/model/metadata/parent.dart';
 export 'src/model/metadata/extra.dart';
 
 export 'src/hidden_db/api.dart';

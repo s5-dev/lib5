@@ -1,3 +1,4 @@
+import 'package:lib5/lib5.dart';
 import 'package:lib5/src/constants.dart';
 
 class ExtraMetadata {
@@ -12,7 +13,7 @@ class ExtraMetadata {
       metadataExtensionWikidataClaims: 'wikidataClaims',
       metadataExtensionLanguages: 'languages',
       metadataExtensionSourceUris: 'sourceUris',
-      metadataExtensionUpdateCID: 'updateCID',
+      // metadataExtensionUpdateCID: 'updateCID',
       metadataExtensionPreviousVersions: 'previousVersions',
       metadataExtensionTimestamp: 'timestamp',
       metadataExtensionTags: 'tags',
@@ -22,12 +23,8 @@ class ExtraMetadata {
       metadataExtensionBridge: 'bridge',
     };
     for (final e in data.entries) {
-      if (e.key == metadataExtensionWikidataClaims) {
-        map['wikidataClaims'] = {};
-        for (final e in e.value.entries) {
-          map['wikidataClaims'][e.key] =
-              e.value.map((v) => {'value': v[1]}).toList();
-        }
+      if (e.key == metadataExtensionUpdateCID) {
+        map['updateCID'] = CID.fromBytes(e.value).toString();
       } else {
         map[names[e.key]!] = e.value;
       }
