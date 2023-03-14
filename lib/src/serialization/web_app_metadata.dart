@@ -26,11 +26,12 @@ WebAppMetadata deserializeWebAppMetadata(Uint8List bytes) {
 
   final errorPages = u.unpackMap().cast<int, String>();
 
-  final length = u.unpackInt()!;
+  final length = u.unpackListLength();
 
   final Map<String, WebAppMetadataFileReference> paths = {};
 
   for (int i = 0; i < length; i++) {
+    u.unpackListLength();
     final path = u.unpackString()!;
     final cid = CID.fromBytes(u.unpackBinary());
     paths[path] = WebAppMetadataFileReference(

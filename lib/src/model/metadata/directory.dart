@@ -33,6 +33,8 @@ class DirectoryMetadata extends Metadata {
     p.packInt(metadataMagicByte);
     p.packInt(metadataTypeDirectory);
 
+    p.packListLength(4);
+
     p.pack(details.data);
 
     p.packMapLength(directories.length);
@@ -72,6 +74,8 @@ class DirectoryMetadata extends Metadata {
     if (typeAndVersion != metadataTypeDirectory) {
       throw 'Invalid metadata: Wrong metadata type';
     }
+
+    u.unpackListLength();
 
     final dir = DirectoryMetadata(
       details: DirectoryMetadataDetails(u.unpackMap().cast<int, dynamic>()),
