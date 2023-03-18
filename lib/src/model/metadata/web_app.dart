@@ -5,7 +5,7 @@ import 'extra.dart';
 
 // TODO Add proof support later
 class WebAppMetadata extends Metadata {
-  final String? dirname;
+  final String? name;
 
   final List<String> tryFiles;
   final Map<int, String> errorPages;
@@ -15,7 +15,7 @@ class WebAppMetadata extends Metadata {
   final Map<String, WebAppMetadataFileReference> paths;
 
   WebAppMetadata({
-    required this.dirname,
+    required this.name,
     required this.tryFiles,
     required this.extraMetadata,
     required this.errorPages,
@@ -25,12 +25,12 @@ class WebAppMetadata extends Metadata {
   @override
   Map<String, dynamic> toJson() => {
         'type': 'web_app',
-        'dirname': dirname,
+        'name': name,
         'tryFiles': tryFiles,
         'errorPages':
             errorPages.map((key, value) => MapEntry(key.toString(), value)),
-        'extraMetadata': extraMetadata,
         'paths': paths,
+        'extraMetadata': extraMetadata,
       };
 }
 
@@ -46,7 +46,6 @@ class WebAppMetadataFileReference {
 
   Map<String, dynamic> toJson() => {
         'cid': cid.toBase64Url(),
-        'size': size,
         'contentType': contentType,
       };
 }

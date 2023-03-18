@@ -56,13 +56,13 @@ abstract class S5APIProviderWithRemoteUpload extends S5APIProvider {
   Future<CID> uploadDirectory(
     Map<String, Stream<List<int>>> fileStreams,
     Map<String, int> lengths,
-    String dirname, {
+    String name, {
     List<String>? tryFiles,
     Map<String, String>? errorPages,
     required Function lookupMimeType,
   }) async {
     final params = {
-      'dirname': dirname,
+      'name': name,
     };
 
     if (tryFiles != null) {

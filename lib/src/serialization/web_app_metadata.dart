@@ -20,7 +20,7 @@ WebAppMetadata deserializeWebAppMetadata(Uint8List bytes) {
 
   u.unpackListLength();
 
-  final dirname = u.unpackString();
+  final name = u.unpackString();
 
   final tryFiles = u.unpackList().cast<String>();
 
@@ -43,7 +43,7 @@ WebAppMetadata deserializeWebAppMetadata(Uint8List bytes) {
   final extraMetadata = u.unpackMap().cast<int, dynamic>();
 
   final dm = WebAppMetadata(
-    dirname: dirname,
+    name: name,
     tryFiles: tryFiles,
     errorPages: errorPages,
     paths: paths,
