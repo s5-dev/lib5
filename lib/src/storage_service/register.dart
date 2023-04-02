@@ -17,7 +17,11 @@ Future<String> register({
   required Uint8List seed,
   required String? email,
   required String label,
+  String? authToken,
 }) async {
+  final Map<String, String> authHeaders =
+      authToken == null ? {} : {'Authorization': 'Bearer $authToken'};
+
   final crypto = identity.api.crypto;
 
   final portalAccountRootSeed = identity.subSeeds[storageServiceAccountsTweak]!;
@@ -39,6 +43,7 @@ Future<String> register({
         'pubKey': pubKeyStr,
       },
     ),
+    headers: authHeaders,
   );
   if (registerRequestResponse.statusCode != 200) {
     throw 'HTTP ${registerRequestResponse.statusCode}: ${registerRequestResponse.body}';
@@ -68,7 +73,7 @@ Future<String> register({
   final registerResponse = await httpClient.post(
     Uri.parse(
         '${serviceConfig.scheme}://${serviceConfig.authority}$endpointRegister'),
-    headers: {'content-type': 'application/json'},
+    headers: {'content-type': 'application/json'}..addAll(authHeaders),
     body: json.encode(data),
   );
 
@@ -78,8 +83,8 @@ Future<String> register({
 
   // TODO Maybe not use set-cookie header name
 
-  final authToken =
+  final accountAuthToken =
       registerResponse.headers['set-cookie']!.split(';').first.split('=').last;
 
-  return authToken;
+  return accountAuthToken;
 }
