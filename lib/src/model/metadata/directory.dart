@@ -115,7 +115,8 @@ class DirectoryMetadataDetails {
 
 class DirectoryReference {
   final int created;
-  final String name;
+  
+  String name;
 
   Uint8List encryptedWriteKey;
 
