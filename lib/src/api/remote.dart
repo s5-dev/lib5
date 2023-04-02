@@ -57,6 +57,11 @@ class RemoteS5APIProvider extends S5APIProviderWithRemoteUpload {
     throw 'Could not download file';
   }
 
+  @override
+  void deleteCID(CID cid) {
+    // TODO: Implement deleteCID
+  }
+
   Future<List> fetchStorageLocationsFromServer(Multihash hash) async {
     final res = await httpClient.get(
       Uri.parse(

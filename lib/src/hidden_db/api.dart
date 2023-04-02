@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:lib5/src/api/base.dart';
+import 'package:lib5/src/model/cid.dart';
 import 'package:lib5/src/util/derive_hash.dart';
 
 import 'classes.dart';
@@ -34,26 +35,38 @@ class TrustedHiddenDBProvider extends HiddenDBProvider {
 
   TrustedHiddenDBProvider(this._hiddenRootKey, this._api);
 
+  final _cidMap = <String, CID>{};
+
   @override
   Future<HiddenRawDataResponse> getRawData(String path) async {
     final pathKey = _derivePathKeyForPath(path);
 
-    return getHiddenRawDataImplementation(
+    final res = await getHiddenRawDataImplementation(
       pathKey: pathKey,
       api: _api,
     );
+
+    if (res.cid != null) {
+      _cidMap[path] = res.cid!;
+    }
+
+    return res;
   }
 
   @override
   Future<void> setRawData(String path, Uint8List data,
       {required int revision}) async {
     final pathKey = _derivePathKeyForPath(path);
-    return setHiddenRawDataImplementation(
+    final newCID = await setHiddenRawDataImplementation(
       pathKey: pathKey,
       data: data,
       revision: revision,
       api: _api,
     );
+    if (_cidMap.containsKey(path)) {
+      _api.deleteCID(_cidMap[path]!);
+    }
+    _cidMap[path] = newCID;
   }
 
   Uint8List _derivePathKeyForPath(String path) {

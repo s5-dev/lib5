@@ -13,6 +13,7 @@ abstract class S5APIProvider {
 
   Future<CID> uploadRawFile(Uint8List data);
   Future<Uint8List> downloadRawFile(Multihash hash);
+  void deleteCID(CID cid);
 
   Future<Metadata> getMetadataByCID(CID cid);
 

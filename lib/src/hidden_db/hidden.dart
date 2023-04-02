@@ -9,7 +9,7 @@ import 'package:lib5/src/util/derive_hash.dart';
 import 'classes.dart';
 import 'constants.dart';
 
-Future<void> setHiddenRawDataImplementation({
+Future<CID> setHiddenRawDataImplementation({
   required Uint8List pathKey,
   required Uint8List data,
   required int revision,
@@ -39,6 +39,7 @@ Future<void> setHiddenRawDataImplementation({
 
   final keyPair = await api.crypto.newKeyPairEd25519(seed: writeKey);
 
+  // TODO Maybe encrypt entry
   final sre = await signRegistryEntry(
     kp: keyPair,
     data: cid.toRegistryEntry(),
@@ -47,6 +48,7 @@ Future<void> setHiddenRawDataImplementation({
   );
 
   await api.registrySet(sre);
+  return cid;
 }
 
 Future<HiddenRawDataResponse> getHiddenRawDataImplementation({
