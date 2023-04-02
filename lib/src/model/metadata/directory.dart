@@ -232,7 +232,7 @@ class FileReference {
       file: FileVersion.decode(data[4].cast<int, dynamic>()),
       version: data[5],
       mimeType: data[6],
-      ext: data[7].cast<String, dynamic>(),
+      ext: data[7]?.cast<String, dynamic>(),
     );
     if (data[8] != null) {
       fr.history = <int, FileVersion>{};
