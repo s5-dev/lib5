@@ -8,7 +8,7 @@ import 'package:lib5/src/storage_service/config.dart';
 import 'package:lib5/src/storage_service/sign_challenge.dart';
 import 'package:lib5/src/util/base64.dart';
 
-const endpointRegister = "/api/register";
+const endpointRegister = "/s5/account/register";
 
 Future<String> register({
   required http.Client httpClient,
@@ -33,8 +33,7 @@ Future<String> register({
   final pubKeyStr = base64UrlNoPaddingEncode(keyPair.publicKey);
 
   final registerRequestResponse = await httpClient.get(
-    Uri.parse('${serviceConfig.scheme}://account.${serviceConfig.authority}')
-        .replace(
+    Uri.parse('${serviceConfig.scheme}://${serviceConfig.authority}').replace(
       path: endpointRegister,
       queryParameters: {
         'pubKey': pubKeyStr,
@@ -68,7 +67,7 @@ Future<String> register({
 
   final registerResponse = await httpClient.post(
     Uri.parse(
-        '${serviceConfig.scheme}://account.${serviceConfig.authority}$endpointRegister'),
+        '${serviceConfig.scheme}://${serviceConfig.authority}$endpointRegister'),
     headers: {'content-type': 'application/json'},
     body: json.encode(data),
   );

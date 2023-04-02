@@ -8,7 +8,7 @@ import 'package:lib5/src/storage_service/config.dart';
 import 'package:lib5/src/storage_service/sign_challenge.dart';
 import 'package:lib5/src/util/base64.dart';
 
-const endpointLogin = "/api/login";
+const endpointLogin = "/s5/account/login";
 
 Future<String> login({
   required http.Client httpClient,
@@ -32,8 +32,7 @@ Future<String> login({
   final pubKeyStr = base64UrlNoPaddingEncode(keyPair.publicKey);
 
   final loginRequestResponse = await httpClient.get(
-    Uri.parse('${serviceConfig.scheme}://account.${serviceConfig.authority}')
-        .replace(
+    Uri.parse('${serviceConfig.scheme}://${serviceConfig.authority}').replace(
       path: endpointLogin,
       queryParameters: {
         'pubKey': pubKeyStr,
@@ -66,7 +65,7 @@ Future<String> login({
 
   final loginResponse = await httpClient.post(
     Uri.parse(
-        '${serviceConfig.scheme}://account.${serviceConfig.authority}$endpointLogin'),
+        '${serviceConfig.scheme}://${serviceConfig.authority}$endpointLogin'),
     headers: {'content-type': 'application/json'},
     body: json.encode(data),
   );
