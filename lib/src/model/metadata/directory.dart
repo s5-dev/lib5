@@ -115,7 +115,7 @@ class DirectoryMetadataDetails {
 
 class DirectoryReference {
   final int created;
-  
+
   String name;
 
   Uint8List encryptedWriteKey;
@@ -274,9 +274,12 @@ class FileVersion {
   EncryptedCID? encryptedCID;
   CID get cid => encryptedCID!.originalCID;
 
+  FileVersionThumbnail? thumbnail;
+
   FileVersion({
     required this.encryptedCID,
     required this.ts,
+    this.thumbnail,
     this.hashes,
     this.ext,
   });
@@ -288,6 +291,11 @@ class FileVersion {
       encryptedCID: EncryptedCID.fromBytes(data[1]!),
       ts: data[8],
       hashes: data[9]?.map((e) => Multihash(e)).toList(),
+      thumbnail: data[10] == null
+          ? null
+          : FileVersionThumbnail.decode(
+              data[10].cast<int, dynamic>(),
+            ),
     );
   }
 
@@ -304,6 +312,8 @@ class FileVersion {
     }
 
     addNotNull(9, hashes?.map((e) => e.fullBytes).toList());
+    addNotNull(10, thumbnail);
+
     return map;
   }
 
@@ -311,9 +321,57 @@ class FileVersion {
         'ts': ts,
         'encryptedCID': encryptedCID?.toBase58(),
         'cid': cid.toBase58(),
-        'hashes': hashes?.map((e) => e.toBase64Url()).toList()
+        'hashes': hashes?.map((e) => e.toBase64Url()).toList(),
+        'thumbnail': thumbnail,
       };
 
   // ! Ignore, temporary
   Map<String, dynamic>? ext;
+}
+
+class FileVersionThumbnail {
+  String? imageType; // default: webp
+  double aspectRatio;
+  EncryptedCID cid;
+  Uint8List? thumbhash;
+
+  FileVersionThumbnail({
+    this.imageType,
+    required this.cid,
+    required this.aspectRatio,
+    this.thumbhash,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'imageType': imageType,
+        'aspectRatio': aspectRatio,
+        'cid': cid.toBase58(),
+        'thumbhash':
+            thumbhash == null ? null : base64UrlNoPaddingEncode(thumbhash!),
+      };
+
+  Map<int, dynamic> encode() {
+    final map = <int, dynamic>{
+      2: aspectRatio,
+      3: cid,
+    };
+    void addNotNull(int key, dynamic value) {
+      if (value != null) {
+        map[key] = value;
+      }
+    }
+
+    addNotNull(1, imageType);
+    addNotNull(4, thumbhash);
+    return map;
+  }
+
+  factory FileVersionThumbnail.decode(Map<int, dynamic> data) {
+    return FileVersionThumbnail(
+      imageType: data[1],
+      aspectRatio: data[2]!,
+      cid: EncryptedCID.fromBytes(data[3]!),
+      thumbhash: data[4],
+    );
+  }
 }

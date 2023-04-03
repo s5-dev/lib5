@@ -39,6 +39,8 @@ extension PackAnything on Packer {
       pack(v.encode());
     } else if (v is FileVersion) {
       pack(v.encode());
+    } else if (v is FileVersionThumbnail) {
+      pack(v.encode());
     } else if (v is CID) {
       pack(v.toBytes());
     } else if (v is NodeID) {
