@@ -353,7 +353,7 @@ class FileVersionThumbnail {
   Map<int, dynamic> encode() {
     final map = <int, dynamic>{
       2: aspectRatio,
-      3: cid,
+      3: cid.toBytes(),
     };
     void addNotNull(int key, dynamic value) {
       if (value != null) {
