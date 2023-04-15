@@ -106,7 +106,14 @@ class DirectoryMetadata extends Metadata {
 class DirectoryMetadataDetails {
   final Map<int, dynamic> data;
 
-  // TODO Use for sync (deleted files/directories with timestamp)
+  bool get isShared => data.containsKey(3);
+  bool get isSharedReadOnly => data[3]?[1] ?? false;
+  bool get isSharedReadWrite => data[3]?[2] ?? false;
+
+  void setShared(bool value, bool write) {
+    data[3] ??= <int, bool>{};
+    data[3][write ? 2 : 1] = value;
+  }
 
   DirectoryMetadataDetails(this.data);
 
@@ -124,12 +131,16 @@ class DirectoryReference {
   Uint8List publicKey;
   Uint8List? encryptionKey;
 
+  /// Can be used by applications to add more metadata
+  Map<String, dynamic>? ext;
+
   DirectoryReference({
     required this.created,
     required this.name,
     required this.encryptedWriteKey,
     required this.publicKey,
     required this.encryptionKey,
+    this.ext,
   });
 
   // ! Ignore, used for internal operations
@@ -146,6 +157,7 @@ class DirectoryReference {
         'encryptionKey': encryptionKey == null
             ? null
             : base64UrlNoPaddingEncode(encryptionKey!),
+        'ext': ext,
       };
 
   factory DirectoryReference.decode(Map<int, dynamic> data) {
@@ -155,6 +167,7 @@ class DirectoryReference {
       publicKey: data[3],
       encryptedWriteKey: data[4],
       encryptionKey: data[5],
+      ext: data[6]?.cast<String, dynamic>(),
     );
   }
 
@@ -172,6 +185,7 @@ class DirectoryReference {
     }
 
     addNotNull(5, encryptionKey);
+    addNotNull(6, ext);
     return map;
   }
 }
@@ -181,7 +195,6 @@ class FileReference {
   FileReference({
     required this.name,
     required this.created,
-    required this.modified,
     required this.version,
     required this.file,
     this.ext,
@@ -202,7 +215,7 @@ class FileReference {
   String? mimeType;
 
   /// Unix timestamp (in milliseconds) when this file was last modified
-  int modified;
+  int get modified => file.ts;
 
   /// Name of this file
   String name;
@@ -228,7 +241,6 @@ class FileReference {
     final fr = FileReference(
       name: data[1],
       created: data[2],
-      modified: data[3],
       file: FileVersion.decode(data[4].cast<int, dynamic>()),
       version: data[5],
       mimeType: data[6],
@@ -247,7 +259,6 @@ class FileReference {
     final map = <int, dynamic>{
       1: name,
       2: created,
-      3: modified,
       4: file,
       5: version,
     };
