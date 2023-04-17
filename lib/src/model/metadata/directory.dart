@@ -283,13 +283,16 @@ class FileVersion {
   int ts;
 
   EncryptedCID? encryptedCID;
-  CID get cid => encryptedCID!.originalCID;
+  CID? plaintextCID;
+
+  CID get cid => plaintextCID ?? encryptedCID!.originalCID;
 
   FileVersionThumbnail? thumbnail;
 
   FileVersion({
-    required this.encryptedCID,
     required this.ts,
+    this.plaintextCID,
+    this.encryptedCID,
     this.thumbnail,
     this.hashes,
     this.ext,
@@ -299,7 +302,8 @@ class FileVersion {
 
   factory FileVersion.decode(Map<int, dynamic> data) {
     return FileVersion(
-      encryptedCID: EncryptedCID.fromBytes(data[1]!),
+      encryptedCID: data[1] == null ? null : EncryptedCID.fromBytes(data[1]!),
+      plaintextCID: data[2] == null ? null : CID.fromBytes(data[2]!),
       ts: data[8],
       hashes: data[9]?.map((e) => Multihash(e)).toList(),
       thumbnail: data[10] == null
@@ -313,7 +317,6 @@ class FileVersion {
   Map<int, dynamic> encode() {
     // TODO Support not-encrypted CIDs
     final map = <int, dynamic>{
-      1: encryptedCID!.toBytes(),
       8: ts,
     };
     void addNotNull(int key, dynamic value) {
@@ -321,6 +324,9 @@ class FileVersion {
         map[key] = value;
       }
     }
+
+    addNotNull(1, encryptedCID?.toBytes());
+    addNotNull(2, plaintextCID?.toBytes());
 
     addNotNull(9, hashes?.map((e) => e.fullBytes).toList());
     addNotNull(10, thumbnail);
