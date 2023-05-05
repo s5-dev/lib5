@@ -166,6 +166,8 @@ class MediaFormat {
   String? initRange;
   String? indexRange;
 
+  String? caption;
+
   MediaFormat({
     required this.subtype,
     this.role,
@@ -190,6 +192,7 @@ class MediaFormat {
     this.index,
     this.initRange,
     this.indexRange,
+    this.caption,
   });
 
   MediaFormat.decode(Map<int, dynamic> data) {
@@ -217,6 +220,7 @@ class MediaFormat {
     index = data[28];
     initRange = data[29];
     indexRange = data[30];
+    caption = data[31];
   }
 
   Map<int, dynamic> encode() {
@@ -252,6 +256,7 @@ class MediaFormat {
     addNotNull(28, index);
     addNotNull(29, initRange);
     addNotNull(30, indexRange);
+    addNotNull(31, caption);
 
     return map;
   }
@@ -289,6 +294,7 @@ class MediaFormat {
     addNotNull('index', index);
     addNotNull('initRange', initRange);
     addNotNull('indexRange', indexRange);
+    addNotNull('caption', caption);
 
     return map;
   }
