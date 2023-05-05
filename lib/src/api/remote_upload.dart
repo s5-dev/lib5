@@ -26,7 +26,7 @@ abstract class S5APIProviderWithRemoteUpload extends S5APIProvider {
       size: data.length,
     );
 
-    for (final sc in storageServiceConfigs) {
+    for (final sc in (storageServiceConfigs + storageServiceConfigs)) {
       try {
         final res = await httpClient.post(
           sc.getAPIUrl(
