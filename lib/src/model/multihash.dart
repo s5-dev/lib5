@@ -23,10 +23,6 @@ class Multihash {
     return Multihash(bytes);
   }
 
-  String toBase58() {
-    return base58Bitcoin.encode(fullBytes);
-  }
-
   String toBase64Url() {
     return base64UrlNoPaddingEncode(fullBytes);
   }

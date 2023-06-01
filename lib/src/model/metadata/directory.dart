@@ -315,7 +315,6 @@ class FileVersion {
   }
 
   Map<int, dynamic> encode() {
-    // TODO Support not-encrypted CIDs
     final map = <int, dynamic>{
       8: ts,
     };

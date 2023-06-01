@@ -1,6 +1,8 @@
 // ! CID types
 // These bytes are carefully selected to make the base58 and base32 representations of different CID types
 // easy to distinguish and not collide with anything on https://github.com/multiformats/multicodec
+import 'dart:typed_data';
+
 const cidTypeRaw = 0x26;
 const cidTypeMetadataMedia = 0xc5;
 // const cidTypeMetadataFile = 0xc6;
@@ -11,10 +13,22 @@ const cidTypeUserIdentity = 0x77;
 
 const cidTypeBridge = 0x3a;
 
-const cidTypeEncrypted = 0xae;
+// format for dynamic encrypted CID
+// type algo key resolver_type mkey_ed255 pubkey
+// in entry: encrypt(RAW CID or MEDIA or SOMETHING)
 
-// ! indicates that the registry entry contains a S5 CID
-const registryS5MagicByte = 0x5a;
+/// Used for immutable encrypted files and metadata formats, key can never be re-used
+///
+/// Used for file versions in Vup
+const cidTypeEncryptedStatic = 0xae;
+
+/// Used for encrypted files with update support
+///
+/// can point to resolver CID, Stream CID, Directory Metadata or Media Metadata object
+const cidTypeEncryptedDynamic = 0xad;
+
+const registryS5CIDByte = 0x5a;
+const registryS5EncryptedByte = 0x5e;
 
 // ! some multicodec bytes
 // BLAKE3 with default output size of 256 bits
@@ -24,6 +38,10 @@ const mkeyEd25519 = 0xed;
 
 const encryptionAlgorithmXChaCha20Poly1305 = 0xa6;
 const encryptionAlgorithmXChaCha20Poly1305NonceSize = 24;
+
+final contentPackFileHeader = Uint8List.fromList(
+  [0x5f, 0x26, 0x73, 0x35],
+);
 
 // ! metadata files
 
@@ -38,8 +56,10 @@ const metadataTypeProofs = 0x05;
 const metadataTypeUserIdentity = 0x07;
 
 const parentLinkTypeUserIdentity = 1;
+const parentLinkTypeBoard = 5;
+const parentLinkTypeBridgeUser = 10;
 
-const registryMaxDataSize = 48;
+const registryMaxDataSize = 64;
 
 // ! user identity
 
@@ -60,8 +80,9 @@ const protocolMethodHashQuery = 4;
 const protocolMethodAnnouncePeers = 8;
 const protocolMethodRegistryQuery = 13;
 
-const recordTypeStorageLocation = 0x05;
-const recordTypeRegistryEntry = 0x07;
+const recordTypeStorageLocation = 0x05; // cache
+const recordTypeRegistryEntry = 0x07; // permanent
+const recordTypeStreamEvent = 0x09; // temporary, delete after time X (like storage locations)
 
 // ! Some optional metadata extensions (same for files, media files and directories)
 
@@ -99,8 +120,13 @@ const metadataExtensionBasicMediaMetadata = 22;
 
 const metadataExtensionBridge = 23;
 
-// TODO comment to / reply to
-// TODO mentions
+const metadataExtensionOriginalTimestamp = 24;
+
+// List<Uint8List>
+const metadataExtensionRoutingHints = 25;
+
+// TODO comment to / reply to (use parents)
+// TODO mentions (use new extension field)
 // TODO Reposts (just link the original item)
 
 // ! media details

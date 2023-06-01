@@ -8,7 +8,8 @@ environment:
 
 dependencies:
   base_codecs: ^1.0.1
-  http: ^0.13.5
+  convert: ^3.1.1
+  http: ^1.0.0
   http_parser: ^4.0.2
   messagepack:
     git: https://github.com/redsolver/messagepack.git

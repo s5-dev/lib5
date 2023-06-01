@@ -16,11 +16,13 @@ class ExtraMetadata {
       // metadataExtensionUpdateCID: 'updateCID',
       metadataExtensionPreviousVersions: 'previousVersions',
       metadataExtensionTimestamp: 'timestamp',
+      metadataExtensionOriginalTimestamp: 'originalTimestamp',
       metadataExtensionTags: 'tags',
       metadataExtensionCategories: 'categories',
       metadataExtensionBasicMediaMetadata: 'basicMediaMetadata',
       metadataExtensionViewTypes: 'viewTypes',
       metadataExtensionBridge: 'bridge',
+      metadataExtensionRoutingHints: 'routingHints',
     };
     for (final e in data.entries) {
       if (e.key == metadataExtensionUpdateCID) {

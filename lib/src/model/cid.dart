@@ -1,15 +1,13 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:base_codecs/base_codecs.dart';
-
 import 'package:lib5/src/constants.dart';
-import 'package:lib5/src/util/base64.dart';
 import 'package:lib5/src/util/bytes.dart';
 import 'package:lib5/src/util/endian.dart';
+import 'multibase.dart';
 import 'multihash.dart';
 
-class CID {
+class CID extends Multibase {
   late final int type;
   late final Multihash hash;
   int? size;
@@ -17,28 +15,7 @@ class CID {
   CID(this.type, this.hash, {this.size});
 
   CID.decode(String cid) {
-    final Uint8List bytes;
-    if (cid[0] == 'z') {
-      bytes = base58BitcoinDecode(cid.substring(1));
-    } else if (cid[0] == 'b') {
-      var str = cid.substring(1).toUpperCase();
-      while (str.length % 4 != 0) {
-        str = '$str=';
-      }
-      bytes = base32Rfc.decode(str);
-    } else if (cid[0] == 'u') {
-      var str = cid.substring(1);
-      while (str.length % 4 != 0) {
-        str = '$str=';
-      }
-      bytes = base64Url.decode(str);
-    } else if (cid[0] == ':') {
-      bytes = Uint8List.fromList(utf8.encode(cid));
-    } else {
-      throw 'Encoding not supported';
-    }
-
-    _init(bytes);
+    _init(Multibase.decodeString(cid));
   }
 
   CID.fromBytes(Uint8List bytes) {
@@ -78,6 +55,7 @@ class CID {
     );
   }
 
+  @override
   Uint8List toBytes() {
     if (type == cidTypeBridge) {
       return hash.fullBytes;
@@ -103,22 +81,11 @@ class CID {
     return [type];
   }
 
+  // TODO Optional encryption
   Uint8List toRegistryEntry() {
     return Uint8List.fromList(
-      [registryS5MagicByte] + toBytes(),
+      [registryS5CIDByte] + toBytes(),
     );
-  }
-
-  String toBase58() {
-    return 'z${base58Bitcoin.encode(toBytes())}';
-  }
-
-  String toBase32() {
-    return 'b${base32Rfc.encode(toBytes()).replaceAll('=', '').toLowerCase()}';
-  }
-
-  String toBase64Url() {
-    return 'u${base64UrlNoPaddingEncode(toBytes())}';
   }
 
   @override
