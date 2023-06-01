@@ -1,10 +1,7 @@
-import 'dart:convert';
 import 'dart:math';
 import 'dart:typed_data';
 
-import 'package:base_codecs/base_codecs.dart';
 import 'package:lib5/src/constants.dart';
-import 'package:lib5/src/util/base64.dart';
 import 'package:lib5/src/util/endian.dart';
 
 import 'cid.dart';

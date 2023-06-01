@@ -51,7 +51,7 @@ class S5TusClient {
 
   int? _fileSize;
 
-  String _fingerprint = "";
+  final String _fingerprint = "";
 
   String? _uploadMetadata;
 
@@ -194,9 +194,7 @@ class S5TusClient {
             handleData: (data, sink) {
               uploadedLength += data.length;
               sink.add(data);
-              if (eventSink == null) {
-                eventSink = sink;
-              }
+              eventSink ??= sink;
             },
             handleError: (error, stack, sink) {
               // TODO Proper error handling
