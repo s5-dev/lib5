@@ -295,7 +295,7 @@ class S5TusClient {
     return serverOffset;
   }
 
-  int _offsetBackup = 0;
+  final int _offsetBackup = 0;
 
   int? _parseOffset(String? offset) {
     if (offset == null || offset.isEmpty) {

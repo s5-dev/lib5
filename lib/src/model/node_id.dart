@@ -1,6 +1,5 @@
 import 'dart:typed_data';
 
-import 'package:base_codecs/base_codecs.dart';
 import 'package:lib5/src/model/multibase.dart';
 import 'package:lib5/util.dart';
 

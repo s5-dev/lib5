@@ -148,7 +148,6 @@ class DirectoryReference {
   String? key;
   int? size;
 
-  @override
   Map<String, dynamic> toJson() => {
         'name': name,
         'created': created,
