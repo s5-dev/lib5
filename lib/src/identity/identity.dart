@@ -5,7 +5,7 @@ import 'package:lib5/src/model/metadata/user_identity.dart';
 import 'package:lib5/src/model/multihash.dart';
 import 'package:lib5/src/registry/sign.dart';
 import 'package:lib5/src/serialization/user_identity_metadata.dart';
-import 'package:messagepack/messagepack.dart';
+import 'package:s5_msgpack/s5_msgpack.dart';
 import 'package:lib5/src/api/base.dart';
 import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/hidden_db/api.dart';

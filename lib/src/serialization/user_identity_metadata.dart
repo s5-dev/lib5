@@ -4,7 +4,7 @@ import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/model/cid.dart';
 import 'package:lib5/src/model/metadata/user_identity.dart';
 import 'package:lib5/src/util/pack_anything.dart';
-import 'package:messagepack/messagepack.dart';
+import 'package:s5_msgpack/s5_msgpack.dart';
 
 Uint8List serializeUserIdentityMetadata(
   UserIdentityMetadata u,

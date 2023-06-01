@@ -6,7 +6,7 @@ import 'package:lib5/src/model/encrypted_cid.dart';
 import 'package:lib5/src/model/multihash.dart';
 import 'package:lib5/src/util/base64.dart';
 import 'package:lib5/src/util/pack_anything.dart';
-import 'package:messagepack/messagepack.dart';
+import 'package:s5_msgpack/s5_msgpack.dart';
 
 import 'base.dart';
 import 'extra.dart';

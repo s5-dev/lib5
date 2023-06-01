@@ -2,7 +2,7 @@ import 'dart:typed_data';
 
 import 'package:lib5/src/model/cid.dart';
 import 'package:lib5/src/model/multihash.dart';
-import 'package:messagepack/messagepack.dart';
+import 'package:s5_msgpack/s5_msgpack.dart';
 
 import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/crypto/base.dart';
