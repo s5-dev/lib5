@@ -1,6 +1,8 @@
 import 'dart:typed_data';
 
+import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/crypto/base.dart';
+import 'package:lib5/src/util/endian.dart';
 
 import 'sign.dart';
 import 'verify.dart';
@@ -35,4 +37,25 @@ class SignedRegistryEntry {
 
   Future<bool> verify({required CryptoImplementation crypto}) =>
       verifyRegistryEntry(this, crypto: crypto);
+
+  Uint8List serialize() {
+    return Uint8List.fromList([
+      recordTypeRegistryEntry,
+      ...pk,
+      ...encodeEndian(revision, 8),
+      data.length,
+      ...data,
+      ...signature,
+    ]);
+  }
+
+  factory SignedRegistryEntry.deserialize(Uint8List event) {
+    final dataLength = event[42];
+    return SignedRegistryEntry(
+      pk: event.sublist(1, 34),
+      revision: decodeEndian(event.sublist(34, 42)),
+      data: event.sublist(43, 43 + dataLength),
+      signature: event.sublist(43 + dataLength),
+    );
+  }
 }
