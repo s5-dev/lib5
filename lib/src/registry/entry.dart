@@ -1,5 +1,10 @@
 import 'dart:typed_data';
 
+import 'package:lib5/src/crypto/base.dart';
+
+import 'sign.dart';
+import 'verify.dart';
+
 class SignedRegistryEntry {
   /// public key with multicodec prefix
   final Uint8List pk;
@@ -19,4 +24,15 @@ class SignedRegistryEntry {
     required this.data,
     required this.signature,
   });
+
+  static Future<SignedRegistryEntry> create({
+    required KeyPairEd25519 kp,
+    required Uint8List data,
+    required int revision,
+    required CryptoImplementation crypto,
+  }) =>
+      signRegistryEntry(kp: kp, data: data, revision: revision, crypto: crypto);
+
+  Future<bool> verify({required CryptoImplementation crypto}) =>
+      verifyRegistryEntry(this, crypto: crypto);
 }
