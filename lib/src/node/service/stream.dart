@@ -42,7 +42,7 @@ class StreamMessageService {
                   .microsecondsSinceEpoch)) {
         throw 'Invalid revision';
       }
-      if (msg.data.length > 1000) {
+      if (msg.data.length > 1000000) {
         throw 'Data too long';
       }
 
@@ -57,7 +57,9 @@ class StreamMessageService {
 
     storeMessage(msg);
 
-    streams[Multihash(msg.pk)]?.add(msg);
+    if (!trusted) {
+      streams[Multihash(msg.pk)]?.add(msg);
+    }
 
     broadcastEntry(msg, receivedFrom);
   }
