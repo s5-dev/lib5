@@ -7,3 +7,5 @@ export 'src/util/score.dart';
 export 'src/util/derive_hash.dart';
 export 'src/util/padding.dart';
 export 'src/util/pack_anything.dart';
+export 'src/node/logger/base.dart';
+export 'src/node/logger/simple.dart';

@@ -137,11 +137,11 @@ Future<MediaMetadata> deserializeMediaMetadata(
   );
 }
 
-Future<Uint8List> serializeMediaMetadata(
-  MediaMetadata m, {
-  List<KeyPairEd25519> keyPairs = const [],
-  required CryptoImplementation crypto,
-}) async {
+Uint8List serializeMediaMetadata(
+  MediaMetadata m,
+  /* List<KeyPairEd25519> keyPairs = const [],
+  required CryptoImplementation crypto, */
+) {
   final c = Packer();
   c.packInt(metadataTypeMedia);
 
@@ -175,6 +175,8 @@ Future<Uint8List> serializeMediaMetadata(
 
   final bodyBytes = c.takeBytes();
 
+  return Uint8List.fromList([metadataMagicByte] + bodyBytes);
+/* 
   if (keyPairs.isEmpty) {
     return Uint8List.fromList([metadataMagicByte] + bodyBytes);
   }
@@ -207,5 +209,5 @@ Future<Uint8List> serializeMediaMetadata(
       ] +
       encodeEndian(proofBytes.length, 2);
 
-  return Uint8List.fromList(header + proofBytes + bodyBytes);
+  return Uint8List.fromList(header + proofBytes + bodyBytes); */
 }

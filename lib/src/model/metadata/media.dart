@@ -112,7 +112,8 @@ class MediaMetadataDetails {
     final map = <String, dynamic>{};
     final names = {
       metadataMediaDetailsDuration: 'duration',
-      metadataMediaDetailsIsLive: 'live',
+      metadataMediaDetailsIsLive: 'isLive',
+      metadataMediaDetailsWasLive: 'wasLive',
     };
     for (final e in data.entries) {
       map[names[e.key]!] = e.value;

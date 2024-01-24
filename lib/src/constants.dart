@@ -6,6 +6,8 @@ import 'dart:typed_data';
 const cidTypeRaw = 0x26;
 const cidTypeMetadataMedia = 0xc5;
 // const cidTypeMetadataFile = 0xc6;
+const cidTypeMetadataDirectory = 0x5d;
+
 const cidTypeMetadataWebApp = 0x59;
 const cidTypeResolver = 0x25;
 
@@ -78,11 +80,12 @@ const protocolMethodSignedMessage = 10;
 
 const protocolMethodHashQuery = 4;
 const protocolMethodAnnouncePeers = 8;
-const protocolMethodRegistryQuery = 13;
+const protocolMethodRegistryQuery = 13; // 0x0d
 
-const recordTypeStorageLocation = 0x05; // cache
+const recordTypeStorageLocation = 0x05; // cache until TTL
 const recordTypeRegistryEntry = 0x07; // permanent
-const recordTypeStreamEvent = 0x09; // temporary, delete after time X (like storage locations)
+const recordTypeStreamMessage = 0x08; // temporary?
+const protocolMethodMessageQuery = 0x49; // 0x0e
 
 // ! Some optional metadata extensions (same for files, media files and directories)
 
@@ -132,6 +135,7 @@ const metadataExtensionRoutingHints = 25;
 // ! media details
 const metadataMediaDetailsDuration = 10;
 const metadataMediaDetailsIsLive = 11;
+const metadataMediaDetailsWasLive = 12;
 
 // ! metadata proofs
 const metadataProofTypeSignature = 1;

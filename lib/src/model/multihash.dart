@@ -15,6 +15,10 @@ class Multihash {
 
   Multihash(this.fullBytes);
 
+  factory Multihash.blake3(Uint8List hash) {
+    return Multihash(Uint8List.fromList([mhashBlake3Default] + hash));
+  }
+
   factory Multihash.fromBase64Url(String hash) {
     while (hash.length % 4 != 0) {
       hash += '=';
