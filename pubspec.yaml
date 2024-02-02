@@ -14,7 +14,7 @@ dependencies:
   mime: ^1.0.4
   s5_msgpack: ^0.3.0
   tint: ^2.0.1
-  web_socket_channel: ^2.4.3
+  web_socket_channel: ^2.4.0
 
 dev_dependencies:
   lints: ^2.0.0
