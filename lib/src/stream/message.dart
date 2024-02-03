@@ -88,13 +88,13 @@ class SignedStreamMessage {
 
   Uint8List serialize() {
     return Uint8List.fromList([
-      recordTypeStreamMessage,
-      ...pk,
-      ...encodeBigEndian(ts, 8),
-      ...encodeBigEndian(seq, 4),
-      cid.toBytes().length,
-      ...cid.toBytes(),
-      ...signature,
+      recordTypeStreamMessage,   //  1 byte
+      ...pk,                     // 33 bytes
+      ...encodeBigEndian(ts, 8), //  8 bytes
+      ...encodeBigEndian(seq, 4),//  4 bytes
+      cid.toBytes().length,      //  1 byte
+      ...cid.toBytes(),          // 34+ bytes
+      ...signature,              // 64 bytes
       ...data,
     ]);
   }

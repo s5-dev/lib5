@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:lib5/src/crypto/base.dart';
 import 'package:lib5/src/identity/constants.dart';
 import 'package:lib5/src/identity/identity.dart';
 import 'package:lib5/src/storage_service/config.dart';
@@ -17,12 +18,11 @@ Future<String> register({
   required Uint8List seed,
   required String? email,
   required String label,
+  required CryptoImplementation crypto,
   String? authToken,
 }) async {
   final Map<String, String> authHeaders =
       authToken == null ? {} : {'Authorization': 'Bearer $authToken'};
-
-  final crypto = identity.api.crypto;
 
   final portalAccountRootSeed = identity.subSeeds[storageServiceAccountsTweak]!;
 

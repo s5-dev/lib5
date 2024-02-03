@@ -27,7 +27,7 @@ Future<CID> setHiddenRawDataImplementation({
     crypto: api.crypto,
   );
 
-  final cid = await api.uploadRawFile(
+  final cid = await api.uploadBlob(
     cipherText,
   );
 

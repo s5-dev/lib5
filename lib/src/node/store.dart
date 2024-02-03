@@ -2,7 +2,6 @@ import 'dart:typed_data';
 
 import 'package:lib5/lib5.dart';
 
-
 abstract class ObjectStore {
   Future<void> init();
 
@@ -34,7 +33,7 @@ abstract class ObjectStore {
   );
   Future<void> delete(Multihash hash);
 
-  Future<Iterable<Multihash>> getStoredHashes(){
+  Future<Iterable<Multihash>> getStoredHashes() {
     throw UnimplementedError();
   }
 

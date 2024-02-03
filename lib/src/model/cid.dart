@@ -14,6 +14,10 @@ class CID extends Multibase {
 
   CID(this.type, this.hash, {this.size});
 
+  CID.raw(this.hash, {this.size}) {
+    type = cidTypeRaw;
+  }
+
   CID.decode(String cid) {
     _init(Multibase.decodeString(cid));
   }

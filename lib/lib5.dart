@@ -20,6 +20,7 @@ export 'src/api/base.dart';
 export 'src/api/key_value_db.dart';
 
 export 'src/registry/entry.dart';
+export 'src/stream/message.dart';
 
 export 'src/serialization/web_app_metadata.dart';
 export 'src/serialization/media_metadata.dart';

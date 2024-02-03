@@ -16,7 +16,7 @@ abstract class S5APIProviderWithRemoteUpload extends S5APIProvider {
   http.Client get httpClient;
 
   @override
-  Future<CID> uploadRawFile(Uint8List data) async {
+  Future<CID> uploadBlob(Uint8List data) async {
     final expectedHash = await crypto.hashBlake3(data);
     final expectedCID = CID(
       cidTypeRaw,

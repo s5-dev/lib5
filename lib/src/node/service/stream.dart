@@ -20,6 +20,7 @@ class StreamMessageService {
     SignedStreamMessage msg, {
     bool trusted = false,
     Peer? receivedFrom,
+    Route? route,
   }) async {
     if (db.contains(makeKey(msg))) {
       return;
@@ -61,7 +62,7 @@ class StreamMessageService {
       streams[Multihash(msg.pk)]?.add(msg);
     }
 
-    broadcastEntry(msg, receivedFrom);
+    broadcastEntry(msg, receivedFrom, route: route);
   }
 
   Uint8List makeKey(SignedStreamMessage msg) {
@@ -109,13 +110,23 @@ class StreamMessageService {
 
   final streamQueryRoutingTable = <Multihash, Set<NodeID>>{};
 
-  void broadcastEntry(SignedStreamMessage msg, Peer? receivedFrom) {
+  void broadcastEntry(
+    SignedStreamMessage msg,
+    Peer? receivedFrom, {
+    Route? route,
+  }) {
     node.logger.verbose('[stream] broadcastEntry');
     final updateMessage = msg.serialize();
 
     if (receivedFrom == null) {
-      for (final p in node.p2p.peers.values) {
-        p.sendMessage(updateMessage);
+      if (route?.nodes != null) {
+        for (final nodeId in route!.nodes!) {
+          node.p2p.peers[nodeId]?.sendMessage(updateMessage);
+        }
+      } else {
+        for (final p in node.p2p.peers.values) {
+          p.sendMessage(updateMessage);
+        }
       }
     } else {
       final interestedPeers = streamQueryRoutingTable[Multihash(msg.pk)] ?? {};
@@ -132,10 +143,12 @@ class StreamMessageService {
   // TODO Regularly clean to announce for new nodes after X time
   final subs = <Multihash>{};
 
-  Future<List<SignedStreamMessage>> getStoredMessages(Uint8List pk,
-      {int? afterTimestamp,
-      int? beforeTimestamp, // TODO Implement beforeTimestamp and routingHints
-      List<Uint8List>? routingHints}) async {
+  // TODO Implement beforeTimestamp
+  Future<List<SignedStreamMessage>> getStoredMessages(
+    Uint8List pk, {
+    int? afterTimestamp,
+    int? beforeTimestamp,
+  }) async {
     final messages = <SignedStreamMessage>[];
     final list = db.get(pk) ?? Uint8List(0);
     for (int i = 0; i < list.length; i += 8) {
@@ -150,15 +163,16 @@ class StreamMessageService {
     return messages;
   }
 
-  Stream<SignedStreamMessage> subscribe(Uint8List pk,
-      {int? afterTimestamp,
-      int? beforeTimestamp, // TODO Implement beforeTimestamp and routingHints
-      List<Uint8List>? routingHints}) async* {
+  Stream<SignedStreamMessage> subscribe(
+    Uint8List pk, {
+    int? afterTimestamp,
+    int? beforeTimestamp, // TODO Implement beforeTimestamp and route
+    Route? route,
+  }) async* {
     for (final msg in await getStoredMessages(
       pk,
       afterTimestamp: afterTimestamp,
       beforeTimestamp: beforeTimestamp,
-      routingHints: routingHints,
     )) {
       yield msg;
     }
@@ -171,7 +185,7 @@ class StreamMessageService {
     }
 
     if (!subs.contains(pkHash)) {
-      sendMessageRequest(pk);
+      sendMessageRequest(pk, route: route);
       subs.add(pkHash);
     }
 
@@ -182,7 +196,12 @@ class StreamMessageService {
     });
   }
 
-  void sendMessageRequest(Uint8List pk, [int? afterTimestamp]) {
+  // TODO Send this if connecting to new nodes
+  void sendMessageRequest(
+    Uint8List pk, {
+    int? afterTimestamp,
+    Route? route,
+  }) {
     final p = Packer();
 
     p.packInt(protocolMethodMessageQuery);
@@ -197,8 +216,14 @@ class StreamMessageService {
 
     // TODO Use shard system if there are more than X peers
 
-    for (final peer in node.p2p.peers.values) {
-      peer.sendMessage(req);
+    if (route?.nodes != null) {
+      for (final nodeId in route!.nodes!) {
+        node.p2p.peers[nodeId]?.sendMessage(req);
+      }
+    } else {
+      for (final peer in node.p2p.peers.values) {
+        peer.sendMessage(req);
+      }
     }
   }
 }

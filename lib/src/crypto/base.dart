@@ -1,12 +1,17 @@
 import 'dart:typed_data';
 
 import 'package:lib5/src/constants.dart';
+import 'package:lib5/src/util/typedefs.dart';
 
 abstract class CryptoImplementation {
   Uint8List generateRandomBytes(int length);
 
   Future<Uint8List> hashBlake3(Uint8List input);
   Uint8List hashBlake3Sync(Uint8List input);
+  Future<Uint8List> hashBlake3File({
+    required int size,
+    required OpenReadFunction openRead,
+  });
 
   Future<bool> verifyEd25519({
     required Uint8List pk,

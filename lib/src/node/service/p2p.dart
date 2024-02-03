@@ -103,6 +103,9 @@ class P2PService {
 
   List<String> blockedPeers = [];
 
+  bool get autoConnectToNewNodes =>
+      node.config['p2p']?['peers']?['autoConnectToNewNodes'] ?? true;
+
   Future<void> start() async {
 /*     final String? domain = node.config['http']?['api']?['domain'];
     if (domain != null && node.config['p2p']?['self']?['disabled'] != true) {
@@ -272,9 +275,10 @@ class P2PService {
             for (final p in peers.values) {
               if (p.id == peer.id) continue;
 
-              if (p.isConnected) {
+              // TODO Maybe re-add
+              /*  if (p.isConnected) {
                 sendPublicPeersToPeer(p, [peer]);
-              }
+              } */
             }
 
             return;
@@ -295,7 +299,7 @@ class P2PService {
                 connectionUris.add(Uri.parse(u.unpackString()!));
               }
 
-              if (connectionUris.isNotEmpty) {
+              if (autoConnectToNewNodes && connectionUris.isNotEmpty) {
                 // TODO Fully support multiple connection uris
                 final uri =
                     connectionUris.first.replace(userInfo: id.toBase58());
@@ -568,6 +572,7 @@ class P2PService {
   }
 
   void connectToNode(List<Uri> connectionUris) async {
+    // TODO Add delay here if node is known
     final connectionUri = connectionUris.firstWhere(
       (uri) => ['ws', 'wss'].contains(uri.scheme),
       /*  orElse: () => connectionUris.firstWhere(

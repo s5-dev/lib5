@@ -2,10 +2,12 @@ import 'dart:typed_data';
 
 import 'package:http/http.dart';
 import 'package:lib5/lib5.dart';
+import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/node/service/p2p.dart';
 import 'package:lib5/src/node/service/registry.dart';
 import 'package:lib5/src/node/service/stream.dart';
 import 'package:lib5/src/node/store.dart';
+import 'package:lib5/src/node/util/uri_provider.dart';
 import 'package:lib5/util.dart';
 import 'package:s5_msgpack/s5_msgpack.dart';
 import 'package:tint/tint.dart';
@@ -138,6 +140,80 @@ class S5NodeBase {
 
   Future<CID> uploadRawFile(Uint8List data) async {
     throw UnimplementedError();
+  }
+
+  final metadataCache = <Multihash, Metadata>{};
+
+  Future<Metadata> downloadMetadata(CID cid) async {
+    final hash = cid.hash;
+
+    late final Metadata metadata;
+
+    if (metadataCache.containsKey(hash)) {
+      metadata = metadataCache[hash]!;
+    } else {
+      final bytes = await downloadBytesByHash(hash);
+
+      if (cid.type == cidTypeMetadataMedia) {
+        metadata = await deserializeMediaMetadata(bytes, crypto: crypto);
+      } else if (cid.type == cidTypeMetadataWebApp) {
+        metadata = deserializeWebAppMetadata(bytes);
+      } else if (cid.type == cidTypeMetadataDirectory) {
+        metadata = DirectoryMetadata.deserizalize(bytes);
+      } else if (cid.type == cidTypeBridge) {
+        metadata = await deserializeMediaMetadata(bytes, crypto: crypto);
+      } else {
+        throw 'Unsupported metadata format';
+      }
+      metadataCache[hash] = metadata;
+    }
+    return metadata;
+  }
+
+  Future<Uint8List> downloadBytesByHash(Multihash hash) async {
+    final dlUriProvider = StorageLocationProvider(this, hash, [
+      storageLocationTypeFull,
+      storageLocationTypeFile,
+    ]);
+
+    dlUriProvider.start();
+
+    int retryCount = 0;
+    while (true) {
+      final dlUri = await dlUriProvider.next();
+
+      logger.verbose('[try] ${dlUri.location.bytesUrl}');
+
+      try {
+        final res = await httpClient
+            .get(Uri.parse(dlUri.location.bytesUrl))
+            .timeout(Duration(seconds: 30)); // TODO Adjust timeout
+
+        if (hash.functionType == cidTypeBridge) {
+          if (res.statusCode != 200) {
+            throw 'HTTP ${res.statusCode}: ${res.body} for ${dlUri.location.bytesUrl}';
+          }
+          // TODO Have list of trusted Node IDs here, already filter them BEFORE EVEN DOWNLOADING
+        } else {
+          final resHash = await crypto.hashBlake3(res.bodyBytes);
+
+          if (!areBytesEqual(hash.hashBytes, resHash)) {
+            throw 'Integrity verification failed';
+          }
+          dlUriProvider.upvote(dlUri);
+        }
+
+        return res.bodyBytes;
+      } catch (e, st) {
+        logger.catched(e, st);
+
+        dlUriProvider.downvote(dlUri);
+      }
+      retryCount++;
+      if (retryCount > 32) {
+        throw 'Too many retries';
+      }
+    }
   }
 
   Future<void> fetchHashLocally(Multihash hash, List<int> types) async {}

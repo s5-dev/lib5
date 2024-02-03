@@ -110,6 +110,8 @@ class DirectoryMetadataDetails {
   bool get isSharedReadOnly => data[3]?[1] ?? false;
   bool get isSharedReadWrite => data[3]?[2] ?? false;
 
+  CID get previousVersion => CID.fromBytes(data[4]);
+
   void setShared(bool value, bool write) {
     data[3] ??= <int, bool>{};
     data[3][write ? 2 : 1] = value;
@@ -279,14 +281,17 @@ class FileReference {
 }
 
 class FileVersion {
-  int ts;
+  /// in millis
+  final int ts;
 
-  EncryptedCID? encryptedCID;
-  CID? plaintextCID;
+  final EncryptedCID? encryptedCID;
+  final CID? plaintextCID;
 
   CID get cid => plaintextCID ?? encryptedCID!.originalCID;
 
-  FileVersionThumbnail? thumbnail;
+  final FileVersionThumbnail? thumbnail;
+
+  final List<Multihash>? hashes;
 
   FileVersion({
     required this.ts,
@@ -297,7 +302,7 @@ class FileVersion {
     this.ext,
   });
 
-  List<Multihash>? hashes;
+  // TODO Add copyWith for adding things like ext
 
   factory FileVersion.decode(Map<int, dynamic> data) {
     return FileVersion(

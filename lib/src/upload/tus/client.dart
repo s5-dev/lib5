@@ -28,8 +28,7 @@ import 'dart:math' show pow;
 
 import 'package:http/http.dart' as http;
 import 'package:lib5/src/model/multihash.dart';
-
-typedef OpenReadFunction = Stream<List<int>> Function(int start);
+import 'package:lib5/src/util/typedefs.dart';
 
 /// This class is used for creating or resuming uploads.
 class S5TusClient {

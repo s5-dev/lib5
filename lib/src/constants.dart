@@ -40,6 +40,7 @@ const mkeyEd25519 = 0xed;
 
 const encryptionAlgorithmXChaCha20Poly1305 = 0xa6;
 const encryptionAlgorithmXChaCha20Poly1305NonceSize = 24;
+const encryptionAlgorithmXChaCha20Poly1305KeySize = 32;
 
 final contentPackFileHeader = Uint8List.fromList(
   [0x5f, 0x26, 0x73, 0x35],

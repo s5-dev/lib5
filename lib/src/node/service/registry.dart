@@ -13,13 +13,13 @@ class RegistryService {
   final KeyValueDB db;
   final S5NodeBase node;
 
-  RegistryService(this.node,{required this.db});
+  RegistryService(this.node, {required this.db});
 
- 
   Future<void> set(
     SignedRegistryEntry sre, {
     bool trusted = false,
     Peer? receivedFrom,
+    Route? route,
   }) async {
     node.logger.verbose(
       '[registry] set ${base64UrlNoPaddingEncode(sre.pk)} ${sre.revision} (${receivedFrom?.id})',
@@ -106,7 +106,7 @@ class RegistryService {
   final streams = <Multihash, StreamController<SignedRegistryEntry>>{};
   final subs = <Multihash>{};
 
-  Future<SignedRegistryEntry?> get(Uint8List pk) async {
+  Future<SignedRegistryEntry?> get(Uint8List pk, {Route? route}) async {
     final key = Multihash(pk);
     if (subs.contains(key)) {
       node.logger.verbose('[registry] get (subbed) $key');
@@ -137,7 +137,7 @@ class RegistryService {
     }
   }
 
-  Stream<SignedRegistryEntry> listen(Uint8List pk) {
+  Stream<SignedRegistryEntry> listen(Uint8List pk, {Route? route}) {
     final key = Multihash(pk);
     if (!streams.containsKey(key)) {
       streams[key] = StreamController<SignedRegistryEntry>.broadcast();

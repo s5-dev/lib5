@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:lib5/src/crypto/base.dart';
 import 'package:lib5/src/model/cid.dart';
 import 'package:lib5/src/model/metadata/user_identity.dart';
 import 'package:lib5/src/model/multihash.dart';
@@ -16,22 +17,17 @@ import 'package:lib5/src/util/pack_anything.dart';
 import 'constants.dart';
 
 class S5UserIdentity {
-  final S5APIProvider api;
   final Map<int, Uint8List> subSeeds;
 
-  S5UserIdentity(this.subSeeds, {required this.api});
+  S5UserIdentity(this.subSeeds);
 
-  factory S5UserIdentity.unpack(
-    Uint8List bytes, {
-    required S5APIProvider api,
-  }) {
+  factory S5UserIdentity.unpack(Uint8List bytes) {
     final u = Unpacker(bytes);
     if (u.unpackInt() != authPayloadVersion1) {
       throw 'Auth payload version not supported';
     }
     return S5UserIdentity(
       u.unpackMap().cast<int, Uint8List>(),
-      api: api,
     );
   }
 
@@ -46,35 +42,34 @@ class S5UserIdentity {
   /// ! NEVER STORE THE SEED PHRASE !
   static Future<S5UserIdentity> fromSeedPhrase(
     String seedPhrase, {
-    required S5APIProvider api,
+    required CryptoImplementation crypto,
   }) async {
     return S5UserIdentity(
-      await _generateSeedMapFromSeedPhrase(seedPhrase, api: api),
-      api: api,
+      await _generateSeedMapFromSeedPhrase(seedPhrase, crypto: crypto),
     );
   }
 
   /// Call this once when creating a new user identity on the network (sets up metadata and recovery mechanism)
   static Future<void> createUserIdentity(
     String seedPhrase, {
-    required S5APIProvider api,
+    required CryptoImplementation crypto,
   }) async {
     final seedMap = await _generateSeedMapFromSeedPhrase(
       seedPhrase,
       full: true,
-      api: api,
+      crypto: crypto,
     );
 
-    final signingKeyPair = await api.crypto.newKeyPairEd25519(
+    final signingKeyPair = await crypto.newKeyPairEd25519(
       seed: seedMap[signingKeyPairTweak]!,
     );
     final links = <int, CID>{};
     for (int i = 0; i < 32; i++) {
-      final resolverKeyPair = await api.crypto.newKeyPairEd25519(
+      final resolverKeyPair = await crypto.newKeyPairEd25519(
         seed: deriveHashBlake3Int(
           seedMap[resolverLinksTweak]!,
           i,
-          crypto: api.crypto,
+          crypto: crypto,
         ),
       );
       links[i] = CID(cidTypeResolver, Multihash(resolverKeyPair.publicKey));
@@ -90,7 +85,7 @@ class S5UserIdentity {
       links: links,
     );
 
-    final cid = await api.uploadRawFile(
+    /* final cid = await api.uploadBlob(
       serializeUserIdentityMetadata(userIdentityMetadata),
     );
 
@@ -104,15 +99,18 @@ class S5UserIdentity {
       revision: 0,
       crypto: api.crypto,
     );
-    await api.registrySet(sre);
+    await api.registrySet(sre); */
+  }
+
+  static String generateSeedPhrase({required CryptoImplementation crypto}) {
+    return generatePhrase(crypto: crypto);
   }
 
   static Future<Map<int, Uint8List>> _generateSeedMapFromSeedPhrase(
     String seedPhrase, {
     bool full = false,
-    required S5APIProvider api,
+    required CryptoImplementation crypto,
   }) async {
-    final crypto = api.crypto;
     final seedEntropy = validatePhrase(seedPhrase, crypto: crypto);
 
     final seedBytes = crypto.hashBlake3Sync(seedEntropy);
@@ -216,9 +214,10 @@ class S5UserIdentity {
   }
 
   Uint8List get fsRootKey => subSeeds[fileSystemTweak]!;
+  Uint8List get hiddenDBKey => subSeeds[hiddenDBTweak]!;
 
-  HiddenDBProvider get hiddenDB => TrustedHiddenDBProvider(
+/*   HiddenDBProvider get hiddenDB => TrustedHiddenDBProvider(
         subSeeds[hiddenDBTweak]!,
         api,
-      );
+      ); */
 }
