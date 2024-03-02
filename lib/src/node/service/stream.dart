@@ -2,7 +2,10 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:lib5/constants.dart';
-import 'package:lib5/lib5.dart';
+import 'package:lib5/src/api/base.dart';
+import 'package:lib5/src/api/key_value_db.dart';
+import 'package:lib5/src/model/multihash.dart';
+import 'package:lib5/src/model/node_id.dart';
 import 'package:lib5/src/node/node.dart';
 import 'package:lib5/src/node/service/p2p.dart';
 import 'package:lib5/src/stream/message.dart';

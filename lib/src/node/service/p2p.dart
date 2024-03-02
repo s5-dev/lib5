@@ -6,7 +6,6 @@ import 'package:lib5/constants.dart';
 import 'package:lib5/lib5.dart';
 import 'package:lib5/src/node/model/signed_message.dart';
 import 'package:lib5/src/node/node.dart';
-import 'package:lib5/src/stream/message.dart';
 import 'package:lib5/util.dart';
 import 'package:s5_msgpack/s5_msgpack.dart';
 import 'package:tint/tint.dart';
@@ -54,7 +53,8 @@ class WebSocketChannelPeer extends Peer {
     Function? onError,
     required Logger logger,
   }) {
-    final sub = _socket.stream.listen(
+    // TODO Store subscription
+    _socket.stream.listen(
       (event) async {
         await callback(event);
       },
@@ -665,5 +665,9 @@ class P2PService {
         connectToNode(connectionUris);
       },
     );
+    /*  if (nodeId ==
+        NodeID.decode('z2DWuPbL5pweybXnEB618pMnV58ECj2VPDNfVGm3tFqBvjF')) {
+      return 1;
+    } */
   }
 }

@@ -4,12 +4,8 @@ import 'package:lib5/src/crypto/base.dart';
 import 'package:lib5/src/model/cid.dart';
 import 'package:lib5/src/model/metadata/user_identity.dart';
 import 'package:lib5/src/model/multihash.dart';
-import 'package:lib5/src/registry/sign.dart';
-import 'package:lib5/src/serialization/user_identity_metadata.dart';
 import 'package:s5_msgpack/s5_msgpack.dart';
-import 'package:lib5/src/api/base.dart';
 import 'package:lib5/src/constants.dart';
-import 'package:lib5/src/hidden_db/api.dart';
 import 'package:lib5/src/seed/seed.dart';
 import 'package:lib5/src/util/derive_hash.dart';
 import 'package:lib5/src/util/pack_anything.dart';
@@ -75,6 +71,7 @@ class S5UserIdentity {
       links[i] = CID(cidTypeResolver, Multihash(resolverKeyPair.publicKey));
     }
 
+    // ignore: unused_local_variable
     final userIdentityMetadata = UserIdentityMetadata(
       details: UserIdentityMetadataDetails(
         created: (DateTime.now().millisecondsSinceEpoch / 1000).round(),

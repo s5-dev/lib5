@@ -3,7 +3,6 @@ import 'package:lib5/src/model/cid.dart';
 import 'base.dart';
 import 'extra.dart';
 
-// TODO Add proof support later
 class WebAppMetadata extends Metadata {
   final String? name;
 
