@@ -94,6 +94,7 @@ class P2PService {
 
   // TODO clean this table after a while (default 1 hour)
   final hashQueryRoutingTable = <Multihash, Set<NodeID>>{};
+  final registryRoutingTable = <Multihash, Set<NodeID>>{};
 
   Future<void> init(KeyValueDB nodesDB) async {
     localNodeId = NodeID(nodeKeyPair.publicKey);
@@ -373,11 +374,24 @@ class P2PService {
 
           return;
         } else if (method == protocolMethodRegistryQuery) {
-          // TODO looks like queries are not forwarded!
           final pk = u.unpackBinary();
           final sre = node.registry.getFromDB(pk);
           if (sre != null) {
             peer.sendMessage(sre.serialize());
+          } else {
+            final hash = Multihash(pk);
+
+            // TODO maybe move to registry service and maybe only forward these
+            if (registryRoutingTable.containsKey(hash)) {
+              registryRoutingTable[hash]!.add(peer.id);
+            } else {
+              registryRoutingTable[hash] = <NodeID>{peer.id};
+            }
+
+            node.registry.sendRegistryRequest(
+              pk,
+              receivedFrom: peer.id,
+            );
           }
         } else if (method == protocolMethodMessageQuery) {
           final pk = u.unpackBinary();

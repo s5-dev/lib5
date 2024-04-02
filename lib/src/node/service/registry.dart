@@ -81,6 +81,7 @@ class RegistryService {
     node.logger.verbose('[registry] broadcastEntry');
     final updateMessage = sre.serialize();
 
+    // TODO Only forward to routing table
     for (final p in node.p2p.peers.values) {
       if (receivedFrom == null || p.id != receivedFrom.id) {
         p.sendMessage(updateMessage);
@@ -88,7 +89,7 @@ class RegistryService {
     }
   }
 
-  void sendRegistryRequest(Uint8List pk) {
+  void sendRegistryRequest(Uint8List pk, {NodeID? receivedFrom}) {
     final p = Packer();
 
     p.packInt(protocolMethodRegistryQuery);
@@ -98,8 +99,16 @@ class RegistryService {
 
     // TODO Use shard system if there are more than X peers
 
-    for (final peer in node.p2p.peers.values) {
-      peer.sendMessage(req);
+    if (receivedFrom == null) {
+      for (final peer in node.p2p.peers.values) {
+        peer.sendMessage(req);
+      }
+    } else {
+      for (final peer in node.p2p.peers.values) {
+        if (receivedFrom != peer.id) {
+          peer.sendMessage(req);
+        }
+      }
     }
   }
 
