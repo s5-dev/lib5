@@ -52,7 +52,7 @@ class S5NodeAPIWithIdentity extends S5NodeAPI {
   }
 
   Future<void> setupAccount(String id) async {
-    node.logger.verbose('[account] setup $id');
+    node.logger.info('[account] setup $id');
 
     final config = accounts['accounts'][id]!;
     final uri = Uri.parse(config['url']);

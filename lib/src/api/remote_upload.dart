@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:lib5/src/api/base.dart';
+import 'package:lib5/src/api/node.dart';
 import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/model/cid.dart';
 import 'package:lib5/src/model/multihash.dart';
@@ -10,8 +11,10 @@ import 'package:lib5/src/storage_service/config.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
-abstract class S5APIProviderWithRemoteUpload extends S5APIProvider {
+class S5APIProviderWithRemoteUpload extends S5NodeAPI {
   final List<StorageServiceConfig> storageServiceConfigs = [];
+
+  S5APIProviderWithRemoteUpload(super.node);
 
   http.Client get httpClient;
 

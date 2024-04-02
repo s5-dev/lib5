@@ -27,7 +27,8 @@ const cidTypeEncryptedStatic = 0xae;
 /// Used for encrypted files with update support
 ///
 /// can point to resolver CID, Stream CID, Directory Metadata or Media Metadata object
-const cidTypeEncryptedDynamic = 0xad;
+// const cidTypeEncryptedDynamic = 0xad;
+const cidTypeEncryptedMutable = 0x5e;
 
 const registryS5CIDByte = 0x5a;
 const registryS5EncryptedByte = 0x5e;

@@ -42,11 +42,15 @@ class CID extends Multibase {
     if (type == cidTypeBridge) {
       hash = Multihash(bytes);
     } else {
-      hash = Multihash(bytes.sublist(1, 34));
+      if (type == cidTypeRaw) {
+        hash = Multihash(bytes.sublist(1, 34));
 
-      final sizeBytes = bytes.sublist(34);
-      if (sizeBytes.isNotEmpty) {
-        size = decodeEndian(sizeBytes);
+        final sizeBytes = bytes.sublist(34);
+        if (sizeBytes.isNotEmpty) {
+          size = decodeEndian(sizeBytes);
+        }
+      } else {
+        hash = Multihash(bytes.sublist(1));
       }
     }
   }
