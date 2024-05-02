@@ -31,9 +31,9 @@ class DirectoryMetadata extends Metadata {
   Uint8List serialize() {
     final p = Packer();
     p.packInt(metadataMagicByte);
-    p.packInt(metadataTypeDirectory);
+    p.packInt(cidTypeMetadataDirectory);
 
-    p.packListLength(4);
+    p.packListLength(3);
 
     p.pack(details.data);
 
@@ -49,8 +49,6 @@ class DirectoryMetadata extends Metadata {
       p.pack(e.value);
     }
 
-    p.pack(extraMetadata.data);
-
     return p.takeBytes();
   }
 
@@ -60,7 +58,6 @@ class DirectoryMetadata extends Metadata {
         'details': details,
         'directories': directories,
         'files': files,
-        'extraMetadata': extraMetadata,
       };
 
   factory DirectoryMetadata.deserizalize(Uint8List bytes) {
@@ -71,7 +68,8 @@ class DirectoryMetadata extends Metadata {
       throw 'Invalid metadata: Unsupported magic byte';
     }
     final typeAndVersion = u.unpackInt();
-    if (typeAndVersion != metadataTypeDirectory) {
+    if (typeAndVersion != metadataTypeDirectory &&
+        typeAndVersion != cidTypeMetadataDirectory) {
       throw 'Invalid metadata: Wrong metadata type';
     }
 
@@ -81,7 +79,6 @@ class DirectoryMetadata extends Metadata {
       details: DirectoryMetadataDetails(u.unpackMap().cast<int, dynamic>()),
       directories: {},
       files: {},
-      extraMetadata: ExtraMetadata({}),
     );
 
     final dirCount = u.unpackMapLength();
@@ -98,8 +95,12 @@ class DirectoryMetadata extends Metadata {
       );
     }
 
-    dir.extraMetadata.data.addAll(u.unpackMap().cast<int, dynamic>());
     return dir;
+  }
+
+  @override
+  String toString() {
+    return 'DirectoryMetadata${jsonEncode(this)}';
   }
 }
 
@@ -235,7 +236,7 @@ class FileReference {
         'mimeType': mimeType,
         'file': file,
         'ext': ext,
-        'history': history,
+        'history': history?.map((key, value) => MapEntry(key.toString(), value)),
       };
 
   factory FileReference.decode(Map<int, dynamic> data) {
@@ -278,6 +279,11 @@ class FileReference {
   // ! Ignore, used for internal operations
   String? uri;
   String? key;
+
+  @override
+  String toString() {
+    return 'FileReference${jsonEncode(this)}';
+  }
 }
 
 class FileVersion {
