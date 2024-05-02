@@ -210,7 +210,7 @@ class S5NodeBase {
         dlUriProvider.downvote(dlUri);
       }
       retryCount++;
-      if (retryCount > 32) {
+      if (retryCount > 8) {
         throw 'Too many retries';
       }
     }
