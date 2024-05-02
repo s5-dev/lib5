@@ -22,9 +22,14 @@ class FileSystem {
     final res = await _runDirectoryTransaction(
       parseURI(await _buildRootWriteURI()),
       (dir, writeKey) async {
-        final name = 'home';
-        if (dir.directories.containsKey(name)) return null;
-        dir.directories[name] = await _createDirectory(name, writeKey);
+        final names = ['home', 'archive'];
+        bool hasChanges = false;
+        for (final name in names) {
+          if (dir.directories.containsKey(name)) continue;
+          dir.directories[name] = await _createDirectory(name, writeKey);
+          hasChanges = true;
+        }
+        if (!hasChanges) return null;
         return dir;
       },
     );
@@ -92,6 +97,48 @@ class FileSystem {
       (dir, _) async {
         if (dir.files.containsKey(fileName)) {
           throw 'Directory already contains a file with the same name';
+        }
+        final file = FileReference(
+          created: fileVersion.ts,
+          name: fileName,
+          mimeType: mediaType ?? lookupMimeType(fileName),
+          version: 0,
+          history: {},
+          file: fileVersion,
+          ext: fileVersion.ext,
+        );
+        file.file.ext = null;
+        dir.files[fileName] = file;
+        fileReference = file;
+
+        return dir;
+      },
+    );
+    res.unwrap();
+    return fileReference;
+  }
+
+  Future<FileReference> createOrUpdateFile({
+    required String directoryPath,
+    required String fileName,
+    required FileVersion fileVersion,
+    String? mediaType,
+  }) async {
+    late final FileReference fileReference;
+    final res = await _runDirectoryTransaction(
+      parseURI(await _preprocessLocalPath(directoryPath)),
+      (dir, _) async {
+        if (dir.files.containsKey(fileName)) {
+          final f = dir.files[fileName]!;
+          f.history ??= {};
+          f.mimeType = mediaType ?? f.mimeType ?? lookupMimeType(fileName);
+          f.history![f.version] = f.file;
+          f.version++;
+          f.file = fileVersion;
+          f.ext = fileVersion.ext;
+          f.file.ext = null;
+          fileReference = f;
+          return dir;
         }
         final file = FileReference(
           created: fileVersion.ts,
@@ -255,6 +302,30 @@ class FileSystem {
     return res?.$1;
   }
 
+  Future<DirectoryMetadata?> listDirectoryRecursive(String path) async {
+    final dir = await listDirectory(path);
+    if (dir == null) return null;
+
+    for (final dirName in dir.directories.keys) {
+      final subdir = await listDirectoryRecursive('$path/$dirName');
+      if (subdir != null) {
+        for (final file in subdir.files.entries) {
+          dir.files['$dirName/${file.key}'] = file.value;
+        }
+      }
+    }
+    return dir;
+  }
+
+  // TODO Handle Errors for missing files
+  Future<FileReference> getFileReference(String path) async {
+    final pathSegments = path.split('/');
+    final dir = await listDirectory(
+      pathSegments.sublist(0, pathSegments.length - 1).join('/'),
+    );
+    return dir!.files[pathSegments.last]!;
+  }
+
   Future<(DirectoryMetadata, SignedRegistryEntry?)?> _getDirectoryMetadata(
       KeySet ks) async {
     SignedRegistryEntry? entry;
@@ -300,6 +371,9 @@ class FileSystem {
     if ('$path/'.startsWith('home/')) {
       return '${await _buildRootWriteURI()}/$path';
     }
+    if ('$path/'.startsWith('archive/')) {
+      return '${await _buildRootWriteURI()}/$path';
+    }
     throw InvalidPathException();
   }
 
@@ -332,6 +406,16 @@ class FileSystem {
         _buildEncryptedDirectoryCID(rootPublicKey, rootEncryptionKey);
 
     return 'fs5://write:$rootWriteKey@${rootCID.toBase32()}';
+  }
+
+  Future<CID> getDirectoryCID(String path) async {
+    final keySet = await getKeySet(parseURI(await _preprocessLocalPath(path)));
+    if (keySet.encryptionKey == null) {
+      return CID(cidTypeMetadataDirectory, Multihash(keySet.publicKey));
+    }
+    final rootCID =
+        _buildEncryptedDirectoryCID(keySet.publicKey, keySet.encryptionKey!);
+    return rootCID;
   }
 
   /// publicKey: 33 bytes (with multicodec prefix byte)
@@ -444,8 +528,15 @@ class FileSystem {
     );
     final parentDirectory = await _getDirectoryMetadata(parentKeySet);
 
-    // TODO Error Handling
-    final dir = parentDirectory!.$1.directories[uri.pathSegments.last]!;
+    // TODO Custom Error Types
+    if (parentDirectory == null) {
+      throw 'Parent Directory of "${uri.path}" does not exist';
+    }
+
+    final dir = parentDirectory.$1.directories[uri.pathSegments.last];
+    if (dir == null) {
+      throw 'Directory "${uri.path}" does not exist';
+    }
     Uint8List? writeKey;
 
     if (parentKeySet.writeKey != null) {
