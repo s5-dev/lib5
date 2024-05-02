@@ -3,8 +3,13 @@ import 'base.dart';
 class SimpleLogger extends Logger {
   final String prefix;
   final bool format;
+  final bool showVerbose;
 
-  SimpleLogger({this.prefix = '', this.format = true});
+  SimpleLogger({
+    this.prefix = '',
+    this.format = true,
+    this.showVerbose = false,
+  });
 
   @override
   void info(String s) {
@@ -18,6 +23,7 @@ class SimpleLogger extends Logger {
 
   @override
   void verbose(String s) {
+    if (!showVerbose) return;
     print(prefix + s);
   }
 
@@ -29,6 +35,6 @@ class SimpleLogger extends Logger {
   @override
   void catched(e, st, [context]) {
     warn(prefix + e.toString() + (context == null ? '' : ' [$context]'));
-    verbose(prefix + st.toString());
+    print(prefix + st.toString());
   }
 }
