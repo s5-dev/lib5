@@ -117,7 +117,7 @@ class P2PService {
     logger.info('connection uris: $selfConnectionUris'); */
 
     final initialPeers = node.config['p2p']?['peers']?['initial'] ?? [];
-    blockedPeers = node.config['p2p']?['peers']?['block'] ?? [];
+    blockedPeers = node.config['p2p']?['peers']?['block']?.cast<String>() ?? [];
 
     for (final p in initialPeers) {
       connectToNode([Uri.parse(p)]);
