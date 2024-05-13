@@ -9,14 +9,12 @@ import 'package:lib5/src/util/pack_anything.dart';
 import 'package:s5_msgpack/s5_msgpack.dart';
 
 import 'base.dart';
-import 'extra.dart';
 
 class DirectoryMetadata extends Metadata {
   DirectoryMetadata({
     required this.details,
     required this.directories,
     required this.files,
-    required this.extraMetadata,
   });
 
   final DirectoryMetadataDetails details;
@@ -25,8 +23,6 @@ class DirectoryMetadata extends Metadata {
   // ! optional "name" for custom name
   Map<String, DirectoryReference> directories;
   Map<String, FileReference> files;
-
-  final ExtraMetadata extraMetadata;
 
   Uint8List serialize() {
     final p = Packer();
@@ -236,7 +232,8 @@ class FileReference {
         'mimeType': mimeType,
         'file': file,
         'ext': ext,
-        'history': history?.map((key, value) => MapEntry(key.toString(), value)),
+        'history':
+            history?.map((key, value) => MapEntry(key.toString(), value)),
       };
 
   factory FileReference.decode(Map<int, dynamic> data) {
