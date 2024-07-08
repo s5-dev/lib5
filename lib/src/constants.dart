@@ -143,7 +143,7 @@ const metadataMediaDetailsWasLive = 12;
 const metadataProofTypeSignature = 1;
 const metadataProofTypeTimestamp = 2;
 
-// ! storage locations
+/// ! storage locations
 const storageLocationTypeArchive = 0;
 const storageLocationTypeFile = 3;
 const storageLocationTypeFull = 5;

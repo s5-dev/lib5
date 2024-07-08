@@ -1,3 +1,5 @@
+/// Provides access to all general lib5 functions.
+
 library lib5;
 
 export 'src/model/cid.dart';

@@ -7,6 +7,10 @@ import 'package:lib5/src/util/endian.dart';
 import 'multibase.dart';
 import 'multihash.dart';
 
+/// CID (Content Identifier) is a compact representation of an address.
+///
+/// A CID can contain a reference to either static contents, or a registry entry (allowing
+/// for mutability). Learn more about the [CID spec here](https://docs.sfive.net/spec/blobs.html).
 class CID extends Multibase {
   late final int type;
   late final Multihash hash;
