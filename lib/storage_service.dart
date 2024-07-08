@@ -1,4 +1,4 @@
-/// provides acces to the storage service.
+/// Provides access to the storage service.
 ///
 /// With these functions S5 nodes can be registered on, logged into,
 /// and worked with (for things like remote uploads).
