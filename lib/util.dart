@@ -1,4 +1,6 @@
-library lib5;
+/// Provides access to basic utilities like loggers, definitions, and converters.
+
+library lib5.util;
 
 export 'src/node/logger/base.dart';
 export 'src/node/logger/simple.dart';
