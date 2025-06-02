@@ -1,37 +1,38 @@
 import 'dart:typed_data';
 
 import 'package:lib5/src/api/base.dart';
+import 'package:lib5/src/identifier/blob.dart';
 import 'package:lib5/src/crypto/encryption/mutable.dart';
-import 'package:lib5/src/model/cid.dart';
 import 'package:lib5/src/registry/sign.dart';
 import 'package:lib5/src/util/derive_hash.dart';
 
 import 'classes.dart';
 import 'constants.dart';
 
-Future<CID> setHiddenRawDataImplementation({
+Future<BlobIdentifier> setHiddenRawDataImplementation({
   required Uint8List pathKey,
   required Uint8List data,
   required int revision,
   required S5APIProvider api,
 }) async {
-  final encryptionKey = deriveHashBlake3Int(
+  final encryptionKey = deriveHashInt(
     pathKey,
     encryptionKeyDerivationTweak,
     crypto: api.crypto,
   );
-
+  // TODO migrate encryption to prefix-free format
+  // ignore: deprecated_member_use_from_same_package
   final cipherText = await encryptMutableBytes(
     data,
     encryptionKey,
     crypto: api.crypto,
   );
 
-  final cid = await api.uploadBlob(
+  final cid = await api.uploadBlobAsBytes(
     cipherText,
   );
 
-  final writeKey = deriveHashBlake3Int(
+  final writeKey = deriveHashInt(
     pathKey,
     writeKeyDerivationTweak,
     crypto: api.crypto,
@@ -42,7 +43,7 @@ Future<CID> setHiddenRawDataImplementation({
   // TODO Maybe encrypt entry
   final sre = await signRegistryEntry(
     kp: keyPair,
-    data: cid.toRegistryEntry(),
+    data: cid.hashBytes,
     revision: revision,
     crypto: api.crypto,
   );
@@ -55,13 +56,13 @@ Future<HiddenRawDataResponse> getHiddenRawDataImplementation({
   required Uint8List pathKey,
   required S5APIProvider api,
 }) async {
-  final encryptionKey = deriveHashBlake3Int(
+  final encryptionKey = deriveHashInt(
     pathKey,
     encryptionKeyDerivationTweak,
     crypto: api.crypto,
   );
 
-  final writeKey = deriveHashBlake3Int(
+  final writeKey = deriveHashInt(
     pathKey,
     writeKeyDerivationTweak,
     crypto: api.crypto,
@@ -73,10 +74,11 @@ Future<HiddenRawDataResponse> getHiddenRawDataImplementation({
     return HiddenRawDataResponse();
   }
 
-  final cid = CID.fromBytes(sre.data.sublist(1));
+  final cid = BlobIdentifier.fromBytes(sre.data.sublist(1));
 
-  final bytes = await api.downloadRawFile(cid.hash);
-
+  final bytes = await api.downloadBlobAsBytes(cid.hash);
+  // TODO migrate encryption to prefix-free format
+  // ignore: deprecated_member_use_from_same_package
   final plaintext = await decryptMutableBytes(
     bytes,
     encryptionKey,

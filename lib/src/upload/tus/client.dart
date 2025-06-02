@@ -324,8 +324,7 @@ class S5TusClient {
 class CustomStreamedRequest extends http.BaseRequest {
   final http.ByteStream byteStream;
 
-  CustomStreamedRequest(String method, Uri url, this.byteStream)
-      : super(method, url);
+  CustomStreamedRequest(super.method, super.url, this.byteStream);
 
   @override
   http.ByteStream finalize() {

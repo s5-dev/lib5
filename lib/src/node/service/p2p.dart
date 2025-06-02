@@ -125,7 +125,7 @@ class P2PService {
   }
 
   Future<void> onNewPeer(Peer peer, {required bool verifyId}) async {
-    peer.challenge = node.crypto.generateRandomBytes(32);
+    peer.challenge = node.crypto.generateSecureRandomBytes(32);
 
     final initialAuthPayloadPacker = Packer();
     initialAuthPayloadPacker.packInt(protocolMethodHandshakeOpen);
@@ -165,11 +165,11 @@ class P2PService {
           peer.sendMessage(await signMessageSimple(p.takeBytes()));
           return;
         } else if (method == recordTypeRegistryEntry) {
-          final sre = SignedRegistryEntry.deserialize(event);
+          final sre = RegistryEntry.deserialize(event);
           await node.registry.set(sre, receivedFrom: peer);
           return;
         } else if (method == recordTypeStreamMessage) {
-          final sre = SignedStreamMessage.deserialize(event);
+          final sre = StreamMessage.deserialize(event);
           await node.stream.set(sre, receivedFrom: peer);
           return;
         } else if (method == recordTypeStorageLocation) {
@@ -195,7 +195,7 @@ class P2PService {
           }
 
           await node.crypto.verifyEd25519(
-            pk: publicKey.sublist(1),
+            publicKey: publicKey.sublist(1),
             message: event.sublist(0, cursor),
             signature: signature,
           );
@@ -290,6 +290,7 @@ class P2PService {
               final peerIdBinary = u.unpackBinary();
               final id = NodeID(peerIdBinary);
 
+              // ignore: unused_local_variable
               final isConnected = u.unpackBool()!;
 
               final connectionUrisCount = u.unpackInt()!;
@@ -386,19 +387,18 @@ class P2PService {
               registryRoutingTable[hash]!.add(peer.id);
             } else {
               registryRoutingTable[hash] = <NodeID>{peer.id};
+              node.registry.sendRegistryRequest(
+                pk,
+                receivedFrom: peer.id,
+              );
             }
-
-            node.registry.sendRegistryRequest(
-              pk,
-              receivedFrom: peer.id,
-            );
           }
         } else if (method == protocolMethodMessageQuery) {
           final pk = u.unpackBinary();
-          int? afterTimestamp;
+          int? afterRevision;
 
           try {
-            afterTimestamp = (u.unpackMap() as Map)[1] as int;
+            afterRevision = (u.unpackMap() as Map)[1] as int;
           } catch (_) {}
 
           final hash = Multihash(pk);
@@ -411,7 +411,7 @@ class P2PService {
 
           final local = await node.stream.getStoredMessages(
             pk,
-            afterTimestamp: afterTimestamp,
+            afterRevision: afterRevision,
           );
           for (final msg in local) {
             // TODO optimization: just read directly from DB instead of serialize/deserialize
@@ -446,7 +446,7 @@ class P2PService {
       Multihash hash, StorageLocation location) async {
     // TODO Use msgpack for these messages!
     final list = [recordTypeStorageLocation] +
-        hash.fullBytes +
+        hash.bytes +
         [location.type] +
         encodeEndian(location.expiry, 4) +
         [location.parts.length];
@@ -459,7 +459,7 @@ class P2PService {
     list.add(0);
 
     final signature = await node.crypto.signEd25519(
-      kp: nodeKeyPair,
+      keyPair: nodeKeyPair,
       message: Uint8List.fromList(list),
     );
 
@@ -536,7 +536,7 @@ class P2PService {
     final packer = Packer();
 
     final signature = await node.crypto.signEd25519(
-      kp: nodeKeyPair,
+      keyPair: nodeKeyPair,
       message: message,
     );
 
@@ -555,7 +555,7 @@ class P2PService {
     final message = u.unpackBinary();
 
     final isValid = await node.crypto.verifyEd25519(
-      pk: nodeId.bytes.sublist(1),
+      publicKey: nodeId.bytes.sublist(1),
       message: message,
       signature: signature,
     );
@@ -574,7 +574,7 @@ class P2PService {
     final p = Packer();
 
     p.packInt(protocolMethodHashQuery);
-    p.packBinary(hash.fullBytes);
+    p.packBinary(hash.bytes);
     p.pack(types);
     // TODO Maybe add int for hop count (or not because privacy concerns)
 

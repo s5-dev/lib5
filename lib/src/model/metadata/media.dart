@@ -8,6 +8,8 @@ import 'base.dart';
 import 'extra.dart';
 import 'parent.dart';
 
+@Deprecated(
+    'this should be handled on the application layer, use directories instead')
 class MediaMetadata extends Metadata {
   final String name;
 
@@ -42,6 +44,8 @@ class MediaMetadata extends Metadata {
       };
 }
 
+@Deprecated(
+    'this should be handled on the application layer, use directories instead')
 class MediaMetadataLinks {
   late final int count;
   late final List<CID> head;
@@ -54,7 +58,7 @@ class MediaMetadataLinks {
     tail = null;
   }
 
-  toJson() {
+  Map toJson() {
     final map = {
       'count': count,
       'head': head.map((e) => e.toString()).toList(),
@@ -108,7 +112,7 @@ class MediaMetadataDetails {
 
   MediaMetadataDetails(this.data);
 
-  toJson() {
+  Map toJson() {
     final map = <String, dynamic>{};
     final names = {
       metadataMediaDetailsDuration: 'duration',
@@ -127,6 +131,8 @@ class MediaMetadataDetails {
   bool get isLive => data[metadataMediaDetailsIsLive];
 }
 
+@Deprecated(
+    'this should be handled on the application layer, use directories instead')
 class MediaFormat {
   late final String subtype;
   late final String?

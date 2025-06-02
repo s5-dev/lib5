@@ -3,6 +3,9 @@ import 'package:lib5/src/model/cid.dart';
 import 'base.dart';
 import 'extra.dart';
 
+// TODO helper method to convert to DirectoryMethod
+
+@Deprecated('web apps are now serialized as fs5 directories (s5 v1 spec)')
 class WebAppMetadata extends Metadata {
   final String? name;
 
@@ -33,6 +36,7 @@ class WebAppMetadata extends Metadata {
       };
 }
 
+@Deprecated('web apps are now serialized as fs5 directories (s5 v1 spec)')
 class WebAppMetadataFileReference {
   final String? contentType;
   int get size => cid.size ?? 0;

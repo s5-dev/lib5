@@ -20,16 +20,16 @@ class StreamMessageService {
   StreamMessageService(this.node, {required this.db});
 
   Future<void> set(
-    SignedStreamMessage msg, {
+    StreamMessage msg, {
     bool trusted = false,
     Peer? receivedFrom,
     Route? route,
   }) async {
-    if (db.contains(makeKey(msg))) {
+    if (db.contains(makeFullKey(msg))) {
       return;
     }
     node.logger.verbose(
-      '[stream] set ${base64UrlNoPaddingEncode(msg.pk)} ${msg.ts} (${receivedFrom?.id})',
+      '[stream] set ${base64UrlNoPaddingEncode(msg.pk)} ${msg.seq} ${msg.nonce} (${receivedFrom?.id})',
     );
 
     if (!trusted) {
@@ -39,14 +39,8 @@ class StreamMessageService {
       if (msg.pk[0] != mkeyEd25519) {
         throw 'Only ed25519 keys are supported';
       }
-      if (msg.ts < 0 ||
-          msg.ts >
-              (DateTime.now()
-                  .add(Duration(seconds: 10))
-                  .microsecondsSinceEpoch)) {
-        throw 'Invalid revision';
-      }
-      if (msg.data.length > 1000000) {
+
+      if ((msg.data?.length ?? 0) > 1000000) {
         throw 'Data too long';
       }
 
@@ -68,31 +62,36 @@ class StreamMessageService {
     broadcastEntry(msg, receivedFrom, route: route);
   }
 
-  Uint8List makeKey(SignedStreamMessage msg) {
-    final seq = encodeBigEndian(msg.ts, 8);
-    return Uint8List.fromList(msg.pk + seq);
+  Uint8List makeRev(StreamMessage msg) {
+    return Uint8List.fromList(
+      encodeBigEndian(msg.seq, 4) + encodeBigEndian(msg.nonce, 4),
+    );
   }
 
-  void storeMessage(SignedStreamMessage msg) {
-    final seq = encodeBigEndian(msg.ts, 8);
+  Uint8List makeFullKey(StreamMessage msg) {
+    return Uint8List.fromList(msg.pk + makeRev(msg));
+  }
+
+  void storeMessage(StreamMessage msg) {
+    final rev = makeRev(msg);
     final list = db.get(msg.pk) ?? Uint8List(0);
 
     db.set(
-      makeKey(msg),
+      makeFullKey(msg),
       msg.serialize(),
     );
     final duplicates = <Multihash>{};
-    final timestamps = <Uint8List>[];
-    timestamps.add(seq);
-    duplicates.add(Multihash(seq));
+    final revs = <Uint8List>[];
+    revs.add(rev);
+    duplicates.add(Multihash(rev));
     for (int i = 0; i < list.length; i += 8) {
       final sub = list.sublist(i, i + 8);
       final mh = Multihash(sub);
       if (duplicates.contains(mh)) continue;
       duplicates.add(mh);
-      timestamps.add(sub);
+      revs.add(sub);
     }
-    timestamps.sort((a, b) {
+    revs.sort((a, b) {
       for (int i = 0; i < 8; i++) {
         if (a[i] < b[i]) return -1;
         if (a[i] > b[i]) return 1;
@@ -103,7 +102,7 @@ class StreamMessageService {
     db.set(
       msg.pk,
       Uint8List.fromList(
-        timestamps.fold(
+        revs.fold(
           <int>[],
           (previousValue, element) => previousValue + element,
         ),
@@ -114,7 +113,7 @@ class StreamMessageService {
   final streamQueryRoutingTable = <Multihash, Set<NodeID>>{};
 
   void broadcastEntry(
-    SignedStreamMessage msg,
+    StreamMessage msg,
     Peer? receivedFrom, {
     Route? route,
   }) {
@@ -141,41 +140,41 @@ class StreamMessageService {
     }
   }
 
-  final streams = <Multihash, StreamController<SignedStreamMessage>>{};
+  final streams = <Multihash, StreamController<StreamMessage>>{};
 
   // TODO Regularly clean to announce for new nodes after X time
   final subs = <Multihash>{};
 
-  // TODO Implement beforeTimestamp
-  Future<List<SignedStreamMessage>> getStoredMessages(
+  // TODO Implement maxRevision
+  Future<List<StreamMessage>> getStoredMessages(
     Uint8List pk, {
-    int? afterTimestamp,
-    int? beforeTimestamp,
+    int? afterRevision,
+    int? maxRevision,
   }) async {
-    final messages = <SignedStreamMessage>[];
+    final messages = <StreamMessage>[];
     final list = db.get(pk) ?? Uint8List(0);
     for (int i = 0; i < list.length; i += 8) {
       final sub = list.sublist(i, i + 8);
-      if (afterTimestamp != null) {
-        if (decodeBigEndian(sub) <= afterTimestamp) continue;
+      if (afterRevision != null) {
+        if (decodeBigEndian(sub) <= afterRevision) continue;
       }
-      messages.add(SignedStreamMessage.deserialize(
+      messages.add(StreamMessage.deserialize(
         db.get(Uint8List.fromList(pk + sub))!,
       ));
     }
     return messages;
   }
 
-  Stream<SignedStreamMessage> subscribe(
+  Stream<StreamMessage> subscribe(
     Uint8List pk, {
-    int? afterTimestamp,
-    int? beforeTimestamp, // TODO Implement beforeTimestamp and route
+    int? afterRevision,
+    int? maxRevision, // TODO Implement maxRevision and route
     Route? route,
   }) async* {
     for (final msg in await getStoredMessages(
       pk,
-      afterTimestamp: afterTimestamp,
-      beforeTimestamp: beforeTimestamp,
+      afterRevision: afterRevision,
+      maxRevision: maxRevision,
     )) {
       yield msg;
     }
@@ -184,7 +183,7 @@ class StreamMessageService {
 
     final key = Multihash(pk);
     if (!streams.containsKey(key)) {
-      streams[key] = StreamController<SignedStreamMessage>.broadcast();
+      streams[key] = StreamController<StreamMessage>.broadcast();
     }
 
     if (!subs.contains(pkHash)) {
@@ -193,8 +192,8 @@ class StreamMessageService {
     }
 
     yield* streams[key]!.stream.where((event) {
-      if (afterTimestamp == null) return true;
-      if (afterTimestamp < event.ts) return true;
+      if (afterRevision == null) return true;
+      if (afterRevision < event.revision) return true;
       return false;
     });
   }
@@ -202,16 +201,16 @@ class StreamMessageService {
   // TODO Send this if connecting to new nodes
   void sendMessageRequest(
     Uint8List pk, {
-    int? afterTimestamp,
+    int? afterRevision,
     Route? route,
   }) {
     final p = Packer();
 
     p.packInt(protocolMethodMessageQuery);
     p.packBinary(pk);
-    if (afterTimestamp != null) {
+    if (afterRevision != null) {
       p.pack({
-        1: afterTimestamp,
+        1: afterRevision,
       });
     }
 

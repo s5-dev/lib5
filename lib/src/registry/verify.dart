@@ -6,7 +6,7 @@ import 'package:lib5/src/registry/entry.dart';
 import 'package:lib5/src/util/endian.dart';
 
 Future<bool> verifyRegistryEntry(
-  SignedRegistryEntry sre, {
+  RegistryEntry sre, {
   required CryptoImplementation crypto,
 }) {
   final list = Uint8List.fromList([
@@ -16,7 +16,7 @@ Future<bool> verifyRegistryEntry(
     ...sre.data,
   ]);
   return crypto.verifyEd25519(
-    pk: sre.pk.sublist(1),
+    publicKey: sre.pk.sublist(1),
     message: list,
     signature: sre.signature,
   );

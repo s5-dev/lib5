@@ -1,4 +1,4 @@
-library lib5;
+library;
 
 export 'src/registry/entry.dart';
 export 'src/registry/sign.dart';

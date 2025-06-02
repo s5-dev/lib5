@@ -1,4 +1,4 @@
-library lib5;
+library;
 
 export 'src/api/node_with_identity.dart';
 export 'src/api/node.dart';

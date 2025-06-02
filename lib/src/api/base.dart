@@ -4,9 +4,8 @@
 
 import 'dart:typed_data';
 
+import 'package:lib5/src/identifier/blob.dart';
 import 'package:lib5/src/crypto/base.dart';
-import 'package:lib5/src/model/cid.dart';
-import 'package:lib5/src/model/metadata/base.dart';
 import 'package:lib5/src/model/multihash.dart';
 import 'package:lib5/src/model/node_id.dart';
 import 'package:lib5/src/registry/entry.dart';
@@ -22,21 +21,21 @@ abstract class S5APIProvider {
   /// Returns the Raw CID of the uploaded raw file blob
   ///
   /// Max size is 10 MiB, use [uploadRawFile] for larger files
-  Future<BlobCID> uploadBlob(Uint8List data);
+  Future<BlobIdentifier> uploadBlobAsBytes(Uint8List data);
 
   /// Upload a raw file
   ///
   /// Returns the Raw CID of the uploaded raw file blob
   ///
   /// Does not have a file size limit and can handle large files efficiently
-  Future<BlobCID> uploadBlobWithStream({
+  Future<BlobIdentifier> uploadBlobWithStream({
     required Multihash hash,
     required int size,
     required OpenReadFunction openRead,
   });
 
   /// Downloads a full file blob to memory, you should only use this if they are smaller than 1 MB
-  Future<Uint8List> downloadBlob(Multihash hash, {Route? route});
+  Future<Uint8List> downloadBlobAsBytes(Multihash hash, {Route? route});
 
   /// Downloads a slice of a blob to memory, from `start` (inclusive) to `end` (exclusive)
   Future<Uint8List> downloadBlobSlice(
@@ -50,27 +49,27 @@ abstract class S5APIProvider {
 
   Future<void> unpinHash(Multihash hash);
 
-  Future<SignedRegistryEntry?> registryGet(
+  Future<RegistryEntry?> registryGet(
     Uint8List pk, {
     Route? route,
   });
-  Stream<SignedRegistryEntry> registryListen(
+  Stream<RegistryEntry> registryListen(
     Uint8List pk, {
     Route? route,
   });
   Future<void> registrySet(
-    SignedRegistryEntry sre, {
+    RegistryEntry entry, {
     Route? route,
   });
 
-  Stream<SignedStreamMessage> streamSubscribe(
+  Stream<StreamMessage> streamSubscribe(
     Uint8List pk, {
-    int? afterTimestamp,
-    int? beforeTimestamp,
+    int? afterRevision,
+    int? maxRevision,
     Route? route,
   });
   Future<void> streamPublish(
-    SignedStreamMessage msg, {
+    StreamMessage msg, {
     Route? route,
   });
 

@@ -4,8 +4,11 @@ import 'package:lib5/src/crypto/base.dart';
 import 'package:lib5/src/util/endian.dart';
 import 'package:lib5/src/util/padding.dart';
 
-import 'constants.dart';
+const encryptionNonceLength = 24;
+const encryptionOverheadLength = 16;
+const encryptionKeyLength = 32;
 
+@Deprecated('mutable encryption will be migrated to a prefix-free format soon')
 Future<Uint8List> encryptMutableBytes(
   Uint8List data,
   Uint8List key, {
@@ -27,7 +30,7 @@ Future<Uint8List> encryptMutableBytes(
   );
 
   // Generate a random nonce.
-  final nonce = crypto.generateRandomBytes(encryptionNonceLength);
+  final nonce = crypto.generateSecureRandomBytes(encryptionNonceLength);
 
   final header = [0x8d, 0x01] + nonce;
 
@@ -42,6 +45,7 @@ Future<Uint8List> encryptMutableBytes(
   return Uint8List.fromList(header + encryptedBytes);
 }
 
+@Deprecated('mutable encryption will be migrated to a prefix-free format soon')
 Future<Uint8List> decryptMutableBytes(
   Uint8List data,
   Uint8List key, {

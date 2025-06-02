@@ -6,6 +6,8 @@ import 'package:lib5/src/model/metadata/user_identity.dart';
 import 'package:lib5/src/util/pack_anything.dart';
 import 'package:s5_msgpack/s5_msgpack.dart';
 
+@Deprecated(
+    's5 no longer uses a custom data structure for public identity data')
 Uint8List serializeUserIdentityMetadata(
   UserIdentityMetadata u,
 ) {
@@ -35,6 +37,8 @@ Uint8List serializeUserIdentityMetadata(
   return c.takeBytes();
 }
 
+@Deprecated(
+    's5 no longer uses a custom data structure for public identity data')
 UserIdentityMetadata deserializeUserIdentityMetadata(Uint8List bytes) {
   final u = Unpacker(bytes);
   final magicByte = u.unpackInt();

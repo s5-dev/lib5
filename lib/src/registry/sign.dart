@@ -5,7 +5,7 @@ import 'package:lib5/src/crypto/base.dart';
 import 'package:lib5/src/registry/entry.dart';
 import 'package:lib5/src/util/endian.dart';
 
-Future<SignedRegistryEntry> signRegistryEntry({
+Future<RegistryEntry> signRegistryEntry({
   required KeyPairEd25519 kp,
   required Uint8List data,
   required int revision,
@@ -19,11 +19,11 @@ Future<SignedRegistryEntry> signRegistryEntry({
   ]);
 
   final signature = await crypto.signEd25519(
-    kp: kp,
+    keyPair: kp,
     message: list,
   );
 
-  return SignedRegistryEntry(
+  return RegistryEntry(
     pk: kp.publicKey,
     revision: revision,
     data: data,

@@ -3,11 +3,10 @@ import 'dart:typed_data';
 
 import 'package:lib5/src/api/key_value_db.dart';
 import 'package:lib5/src/api/node.dart';
-import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/hidden_db/api.dart';
 import 'package:lib5/src/hidden_db/classes.dart';
+import 'package:lib5/src/identifier/blob.dart';
 import 'package:lib5/src/identity/identity.dart';
-import 'package:lib5/src/model/cid.dart';
 import 'package:lib5/src/model/multihash.dart';
 import 'package:lib5/src/model/node_id.dart';
 import 'package:lib5/storage_service.dart';
@@ -152,7 +151,7 @@ class S5NodeAPIWithIdentity extends S5NodeAPI {
       headers: {},
     );
 
-    final seed = crypto.generateRandomBytes(32);
+    final seed = crypto.generateSecureRandomBytes(32);
 
     final authToken = await register(
       serviceConfig: portalConfig,
@@ -193,13 +192,8 @@ class S5NodeAPIWithIdentity extends S5NodeAPI {
   }
 
   @override
-  Future<void> deleteCID(CID cid) async {
-    // TODO Implement
-    node.logger.error('deleteCID $cid');
-  }
+  Future<BlobIdentifier> uploadBlobAsBytes(Uint8List data) async {
 
-  @override
-  Future<CID> uploadBlob(Uint8List data) async {
     final List<String> services = accountConfigs.keys.toList();
     // TODO Differentiate by type
     /*  if (data[0] == 0x8d && data[1] == 0x01) {
@@ -208,28 +202,22 @@ class S5NodeAPIWithIdentity extends S5NodeAPI {
       services = thumbnailUploadServiceOrder;
     } */
     final expectedHash = await crypto.hashBlake3(data);
-    final cid = CID(
-      cidTypeRaw,
-      Multihash(Uint8List.fromList(
-        [mhashBlake3Default] + expectedHash,
-      )),
-      size: data.length,
-    );
+    final blobId = BlobIdentifier(Multihash.blake3(expectedHash), data.length);
 
     final results = await Future.wait(
       [
         for (final service in services)
-          _uploadRawFileInternal(cid, service, data)
+          _uploadRawFileInternal(blobId, service, data)
       ],
     );
     for (final result in results) {
-      if (result) return cid;
+      if (result) return blobId;
     }
     throw 'Could not upload raw file $services $results';
   }
 
   Future<bool> _uploadRawFileInternal(
-    CID expectedCID,
+    BlobIdentifier expectedBlobId,
     String id,
     Uint8List data,
   ) async {
@@ -246,23 +234,16 @@ class S5NodeAPIWithIdentity extends S5NodeAPI {
       if (res.statusCode != 200) {
         throw 'HTTP ${res.statusCode}: ${res.body}';
       }
-      final cid = CID.decode(jsonDecode(res.body)['cid']);
-      if (cid != expectedCID) {
+
+      final cidStr = jsonDecode(res.body)['cid'];
+      if (!expectedBlobId.matchesCidStr(cidStr)) {
         // TODO Use HashMismatchException here
-        throw 'Integrity check for file uploaded to $id failed ($cid != $expectedCID)';
+        throw 'Integrity check for file uploaded to $id failed ($cidStr != $expectedBlobId)';
       }
       return true;
     } catch (e, st) {
       node.logger.catched(e, st);
       return false;
     }
-  }
-
-  @override
-  Future<CID> uploadRawFile(
-      {required Multihash hash,
-      required int size,
-      required OpenReadFunction openRead}) {
-    throw UnimplementedError();
   }
 }

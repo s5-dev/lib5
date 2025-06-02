@@ -2,114 +2,122 @@ import 'dart:typed_data';
 
 import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/crypto/base.dart';
-import 'package:lib5/src/model/cid.dart';
 import 'package:lib5/src/model/multihash.dart';
 import 'package:lib5/src/util/big_endian.dart';
 
-class SignedStreamMessage {
+class StreamMessage {
   /// public key with multicodec prefix, for example 0xed for ed25519
   final Uint8List pk;
 
-  /// unix timestamp of this message (can be millis or micros)
-  final int ts; // ! u64
   /// seq number of this message, can be 0
   final int seq; // ! u32
 
-  /// the CID of the data payload
-  final CID cid;
+  // nonce of this message
+  final int nonce; // ! u32
+
+  int get revision => (seq << 32) + nonce;
+  final Multihash hash;
 
   /// the data payload of this message
-  final Uint8List data;
+  final Uint8List? data;
 
   /// signature of this message
   final Uint8List signature;
 
-  SignedStreamMessage({
+  StreamMessage({
     required this.pk,
-    required this.ts,
-    required this.cid,
-    required this.data,
+    required this.seq,
+    this.nonce = 0,
+    required this.hash,
     required this.signature,
-    this.seq = 0,
+    this.data,
   });
 
-  static Future<SignedStreamMessage> create({
+  static Future<StreamMessage> create({
     required KeyPairEd25519 kp,
+    required int seq,
+    int nonce = 0,
     required Uint8List data,
-    required int ts,
-    int seq = 0,
     required CryptoImplementation crypto,
   }) async {
     final hash = await crypto.hashBlake3(data);
-    final cid = CID(cidTypeRaw, Multihash.blake3(hash), size: data.length);
+    final mhash = Multihash.blake3(hash);
     final list = Uint8List.fromList([
       recordTypeStreamMessage,
-      ...encodeBigEndian(ts, 8),
       ...encodeBigEndian(seq, 4),
-      cid.toBytes().length,
-      ...cid.toBytes(),
+      ...encodeBigEndian(nonce, 4),
+      0x21,
+      ...mhash.bytes,
     ]);
 
     final signature = await crypto.signEd25519(
-      kp: kp,
+      keyPair: kp,
       message: list,
     );
 
-    return SignedStreamMessage(
+    return StreamMessage(
       pk: kp.publicKey,
-      ts: ts,
       seq: seq,
-      cid: cid,
-      data: data,
+      nonce: nonce,
+      hash: mhash,
       signature: Uint8List.fromList(signature),
+      data: data,
     );
   }
 
   Future<bool> verify({required CryptoImplementation crypto}) async {
-    final hash = await crypto.hashBlake3(data);
-    final calculatedCID =
-        CID(cidTypeRaw, Multihash.blake3(hash), size: data.length);
-    if (cid != calculatedCID) return false;
+    if (data != null) {
+      final calculatedHash = await crypto.hashBlake3(data!);
+      final mhash = Multihash.blake3(calculatedHash);
+      if (hash != mhash) return false;
+    }
 
     final list = Uint8List.fromList([
       recordTypeStreamMessage,
-      ...encodeBigEndian(ts, 8),
       ...encodeBigEndian(seq, 4),
-      cid.toBytes().length,
-      ...cid.toBytes(),
+      ...encodeBigEndian(nonce, 4),
+      0x21,
+      ...hash.bytes,
     ]);
 
+    if (pk[0] != mkeyEd25519) {
+      throw 'unsupported algorithm ${pk[0]}';
+    }
+
     return crypto.verifyEd25519(
-      pk: pk.sublist(1),
+      publicKey: pk.sublist(1),
       message: list,
       signature: signature,
     );
   }
 
   Uint8List serialize() {
+    final hashBytes = hash.bytes;
+    assert(hashBytes.length == 0x21);
     return Uint8List.fromList([
-      recordTypeStreamMessage,   //  1 byte
-      ...pk,                     // 33 bytes
-      ...encodeBigEndian(ts, 8), //  8 bytes
-      ...encodeBigEndian(seq, 4),//  4 bytes
-      cid.toBytes().length,      //  1 byte
-      ...cid.toBytes(),          // 34+ bytes
-      ...signature,              // 64 bytes
-      ...data,
+      recordTypeStreamMessage,      //  1 byte
+      ...pk,                        // 33 bytes
+      ...encodeBigEndian(seq,   4), //  4 bytes
+      ...encodeBigEndian(nonce, 4), //  4 bytes
+      hashBytes.length,             //  1 byte
+      ...hashBytes,                 // usually 33 bytes (blake3 multihash)
+      ...signature,                 // 64 bytes
+      if (data != null) ...data!,
     ]);
   }
 
-  factory SignedStreamMessage.deserialize(Uint8List event) {
-    final cidLength = event[46];
-    final cid = CID.fromBytes(event.sublist(47, 47 + cidLength));
-    final signatureEnd = 47 + cidLength + 64;
+  factory StreamMessage.deserialize(Uint8List event) {
+    final hashLength = event[42];
+    final mhash = Multihash(event.sublist(43, 43 + hashLength));
+    final signatureStart = 43 + hashLength;
+    final signatureEnd = signatureStart + 64;
 
-    return SignedStreamMessage(
+    return StreamMessage(
       pk: event.sublist(1, 34),
-      ts: decodeBigEndian(event.sublist(34, 42)),
-      seq: decodeBigEndian(event.sublist(42, 46)),
-      cid: cid,
-      signature: event.sublist(47 + cidLength, signatureEnd),
+      seq: decodeBigEndian(event.sublist(34, 38)),
+      nonce: decodeBigEndian(event.sublist(38, 42)),
+      hash: mhash,
+      signature: event.sublist(signatureStart, signatureEnd),
       data: event.sublist(signatureEnd),
     );
   }

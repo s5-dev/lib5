@@ -1,11 +1,9 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:lib5/src/api/base.dart';
 import 'package:lib5/src/api/node.dart';
-import 'package:lib5/src/constants.dart';
+import 'package:lib5/src/identifier/blob.dart';
 import 'package:lib5/src/model/cid.dart';
-import 'package:lib5/src/model/multihash.dart';
 import 'package:lib5/src/storage_service/config.dart';
 
 import 'package:http/http.dart' as http;
@@ -16,18 +14,13 @@ class S5APIProviderWithRemoteUpload extends S5NodeAPI {
 
   S5APIProviderWithRemoteUpload(super.node);
 
+  @override
   http.Client get httpClient;
 
   @override
-  Future<CID> uploadBlob(Uint8List data) async {
+  Future<BlobIdentifier> uploadBlobAsBytes(Uint8List data) async {
     final expectedHash = await crypto.hashBlake3(data);
-    final expectedCID = CID(
-      cidTypeRaw,
-      Multihash(Uint8List.fromList(
-        [mhashBlake3Default] + expectedHash,
-      )),
-      size: data.length,
-    );
+    final expectedBlobId = BlobIdentifier.blake3(expectedHash, data.length);
 
     for (final sc in (storageServiceConfigs + storageServiceConfigs)) {
       try {
@@ -41,11 +34,12 @@ class S5APIProviderWithRemoteUpload extends S5NodeAPI {
         if (res.statusCode != 200) {
           throw 'HTTP ${res.statusCode}: ${res.body}';
         }
-        final cid = CID.decode(json.decode(res.body)['cid']);
-        if (cid != expectedCID) {
-          throw 'Integrity check for file uploaded to $sc failed ($cid != $expectedCID)';
+
+        final cidStr = json.decode(res.body)['cid'];
+        if (!expectedBlobId.matchesCidStr(cidStr)) {
+          throw 'Integrity check for file uploaded to $sc failed ($cidStr != $expectedBlobId)';
         }
-        return cid;
+        return expectedBlobId;
       } catch (e, st) {
         // TODO Proper logging
         print(e);
@@ -56,6 +50,8 @@ class S5APIProviderWithRemoteUpload extends S5NodeAPI {
   }
 
   // TODO Make this trustless
+  @Deprecated(
+      'this should be handled on the application layer and use directories')
   Future<CID> uploadDirectory(
     Map<String, Stream<List<int>>> fileStreams,
     Map<String, int> lengths,

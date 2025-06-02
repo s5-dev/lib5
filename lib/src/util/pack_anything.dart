@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:lib5/src/identifier/blob.dart';
 import 'package:lib5/src/model/cid.dart';
 import 'package:lib5/src/model/metadata/directory.dart';
 import 'package:lib5/src/model/metadata/media.dart';
@@ -31,6 +32,7 @@ extension PackAnything on Packer {
         pack(e.key);
         pack(e.value);
       }
+      // ignore: deprecated_member_use_from_same_package
     } else if (v is MediaFormat) {
       pack(v.encode());
     } else if (v is DirectoryReference) {
@@ -41,7 +43,10 @@ extension PackAnything on Packer {
       pack(v.encode());
     } else if (v is FileVersionThumbnail) {
       pack(v.encode());
+      // ignore: deprecated_member_use_from_same_package
     } else if (v is CID) {
+      pack(v.toBytes());
+    } else if (v is BlobIdentifier) {
       pack(v.toBytes());
     } else if (v is NodeID) {
       pack(v.bytes);

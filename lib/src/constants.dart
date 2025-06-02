@@ -1,17 +1,22 @@
 // ! CID types
 // These bytes are carefully selected to make the base58 and base32 representations of different CID types
 // easy to distinguish and not collide with anything on https://github.com/multiformats/multicodec
-import 'dart:typed_data';
 
+const cidTypeBlob = 0x5b;
+const blobTypeRaw = 0x82;
+
+@Deprecated('use blob identifiers instead')
 const cidTypeRaw = 0x26;
+@Deprecated('use directories instead')
 const cidTypeMetadataMedia = 0xc5;
 // const cidTypeMetadataFile = 0xc6;
-const cidTypeMetadataDirectory = 0x5d;
+const cidTypeDirectory = 0x5d;
+@Deprecated('use `cidTypeDirectory` instead')
+const cidTypeMetadataDirectory = cidTypeDirectory;
 
+@Deprecated('use directories instead')
 const cidTypeMetadataWebApp = 0x59;
-const cidTypeResolver = 0x25;
 
-const cidTypeUserIdentity = 0x77;
 
 const cidTypeBridge = 0x3a;
 
@@ -22,6 +27,7 @@ const cidTypeBridge = 0x3a;
 /// Used for immutable encrypted files and metadata formats, key can never be re-used
 ///
 /// Used for file versions in Vup
+@Deprecated('use directories instead')
 const cidTypeEncryptedStatic = 0xae;
 
 /// Used for encrypted files with update support
@@ -30,12 +36,13 @@ const cidTypeEncryptedStatic = 0xae;
 // const cidTypeEncryptedDynamic = 0xad;
 const cidTypeEncryptedMutable = 0x5e;
 
-const registryS5CIDByte = 0x5a;
-const registryS5EncryptedByte = 0x5e;
-
 // ! some multicodec bytes
 // BLAKE3 with default output size of 256 bits
+@Deprecated('use mhashBlake3 instead')
 const mhashBlake3Default = 0x1f;
+
+const mhashBlake3 = 0x1e;
+const mhashSha256 = 0x12;
 
 const mkeyEd25519 = 0xed;
 
@@ -43,24 +50,27 @@ const encryptionAlgorithmXChaCha20Poly1305 = 0xa6;
 const encryptionAlgorithmXChaCha20Poly1305NonceSize = 24;
 const encryptionAlgorithmXChaCha20Poly1305KeySize = 32;
 
-final contentPackFileHeader = Uint8List.fromList(
-  [0x5f, 0x26, 0x73, 0x35],
-);
-
 // ! metadata files
 
 // used as the first byte of metadata files
+@Deprecated('use directories instead')
 const metadataMagicByte = 0x5f;
 
 // types for metadata files
+@Deprecated('use directories instead')
 const metadataTypeMedia = 0x02;
+@Deprecated('use directories instead')
 const metadataTypeWebApp = 0x03;
 const metadataTypeDirectory = 0x04;
-const metadataTypeProofs = 0x05;
+@Deprecated('s5 no longer uses a custom data structure for public identity data')
 const metadataTypeUserIdentity = 0x07;
 
+
+@Deprecated('this should be on the application layer, use directories instead')
 const parentLinkTypeUserIdentity = 1;
+@Deprecated('this should be on the application layer, use directories instead')
 const parentLinkTypeBoard = 5;
+@Deprecated('this should be on the application layer, use directories instead')
 const parentLinkTypeBridgeUser = 10;
 
 const registryMaxDataSize = 64;
@@ -69,8 +79,6 @@ const registryMaxDataSize = 64;
 
 const authPayloadVersion1 = 0x01;
 
-const userIdentityLinkProfile = 0x00;
-const userIdentityLinkPublicFileSystem = 0x01;
 // const userIdentityLinkFollowingList = 0x02;
 
 // ! p2p protocol message types
@@ -92,42 +100,57 @@ const protocolMethodMessageQuery = 0x49; // 0x0e
 // ! Some optional metadata extensions (same for files, media files and directories)
 
 // List<String>, license identifier from https://spdx.org/licenses/
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionLicenses = 11;
 
 // List<Uint8List>, multicoded pubkey that references a registry entry that contains donation links and addresses
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionDonationKeys = 12;
 
 // map string->map, external ids of this object by their wikidata property id.
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionWikidataClaims = 13;
 
 // List<String>, for example [en, de, de-DE]
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionLanguages = 14;
 
 // List<String>,
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionSourceUris = 15;
 
 // Resolver CID, can be used to update this post. can also be used to "delete" a post.
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionUpdateCID = 16;
 
 // List<CID>, lists previous versions of this post
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionPreviousVersions = 17;
 
 // unix timestamp in milliseconds
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionTimestamp = 18;
 
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionTags = 19;
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionCategories = 20;
 
 // video, podcast, book, audio, music, ...
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionViewTypes = 21;
+@Deprecated('this should be on the application layer, use directories instead')
 
 const metadataExtensionBasicMediaMetadata = 22;
 
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionBridge = 23;
 
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionOriginalTimestamp = 24;
 
 // List<Uint8List>
+@Deprecated('this should be on the application layer, use directories instead')
 const metadataExtensionRoutingHints = 25;
 
 // TODO comment to / reply to (use parents)
@@ -138,10 +161,6 @@ const metadataExtensionRoutingHints = 25;
 const metadataMediaDetailsDuration = 10;
 const metadataMediaDetailsIsLive = 11;
 const metadataMediaDetailsWasLive = 12;
-
-// ! metadata proofs
-const metadataProofTypeSignature = 1;
-const metadataProofTypeTimestamp = 2;
 
 // ! storage locations
 const storageLocationTypeArchive = 0;

@@ -1,3 +1,3 @@
-library lib5;
+library;
 
 export 'src/fs/fs.dart';

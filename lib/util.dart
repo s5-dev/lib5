@@ -1,4 +1,4 @@
-library lib5;
+library;
 
 export 'src/node/logger/base.dart';
 export 'src/node/logger/simple.dart';

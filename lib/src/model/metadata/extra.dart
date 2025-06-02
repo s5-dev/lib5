@@ -1,6 +1,8 @@
 import 'package:lib5/lib5.dart';
 import 'package:lib5/src/constants.dart';
 
+@Deprecated(
+    'this should be handled on the application layer, use directories instead')
 class ExtraMetadata {
   final Map<int, dynamic> data;
   ExtraMetadata(this.data);

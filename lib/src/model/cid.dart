@@ -7,6 +7,7 @@ import 'package:lib5/src/util/endian.dart';
 import 'multibase.dart';
 import 'multihash.dart';
 
+@Deprecated('use blob identifiers instead')
 class CID extends Multibase {
   late final int type;
   late final Multihash hash;
@@ -36,6 +37,8 @@ class CID extends Multibase {
       ),
     );
   }
+
+  Uint8List get hashBytes => hash.fullBytes;
 
   void _init(Uint8List bytes) {
     type = bytes[0];
@@ -90,11 +93,6 @@ class CID extends Multibase {
   }
 
   // TODO Optional encryption
-  Uint8List toRegistryEntry() {
-    return Uint8List.fromList(
-      [registryS5CIDByte] + toBytes(),
-    );
-  }
 
   @override
   String toString() {

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:lib5/src/constants.dart';
-import 'package:lib5/src/model/cid.dart';
+import 'package:lib5/src/identifier/blob.dart';
 import 'package:lib5/src/model/encrypted_cid.dart';
 import 'package:lib5/src/model/multihash.dart';
 import 'package:lib5/src/util/base64.dart';
@@ -27,7 +27,9 @@ class DirectoryMetadata extends Metadata {
 
   Uint8List serialize() {
     final p = Packer();
+    // ignore: deprecated_member_use_from_same_package
     p.packInt(metadataMagicByte);
+    // ignore: deprecated_member_use_from_same_package
     p.packInt(cidTypeMetadataDirectory);
 
     p.packListLength(3);
@@ -61,11 +63,13 @@ class DirectoryMetadata extends Metadata {
     final u = Unpacker(bytes);
 
     final magicByte = u.unpackInt();
+    // ignore: deprecated_member_use_from_same_package
     if (magicByte != metadataMagicByte) {
       throw 'Invalid metadata: Unsupported magic byte';
     }
     final typeAndVersion = u.unpackInt();
     if (typeAndVersion != metadataTypeDirectory &&
+        // ignore: deprecated_member_use_from_same_package
         typeAndVersion != cidTypeMetadataDirectory) {
       throw 'Invalid metadata: Wrong metadata type';
     }
@@ -108,7 +112,7 @@ class DirectoryMetadataDetails {
   bool get isSharedReadOnly => data[3]?[1] ?? false;
   bool get isSharedReadWrite => data[3]?[2] ?? false;
 
-  CID get previousVersion => CID.fromBytes(data[4]);
+  BlobIdentifier get previousVersion => BlobIdentifier.fromBytes(data[4]);
 
   void setShared(bool value, bool write) {
     data[3] ??= <int, bool>{};
@@ -286,12 +290,12 @@ class FileReference {
 
 class FileVersion {
   /// in millis
-  final int ts;
+  int ts;
 
   final EncryptedCID? encryptedCID;
-  final CID? plaintextCID;
+  final BlobIdentifier? plaintextCID;
 
-  CID get cid => plaintextCID ?? encryptedCID!.originalCID;
+  BlobIdentifier get cid => plaintextCID ?? encryptedCID!.originalCID;
 
   final FileVersionThumbnail? thumbnail;
 
@@ -311,7 +315,7 @@ class FileVersion {
   factory FileVersion.decode(Map<int, dynamic> data) {
     return FileVersion(
       encryptedCID: data[1] == null ? null : EncryptedCID.fromBytes(data[1]!),
-      plaintextCID: data[2] == null ? null : CID.fromBytes(data[2]!),
+      plaintextCID: data[2] == null ? null : BlobIdentifier.fromBytes(data[2]!),
       ts: data[8],
       hashes: data[9]?.map((e) => Multihash(e)).toList(),
       thumbnail: data[10] == null
@@ -335,7 +339,7 @@ class FileVersion {
     addNotNull(1, encryptedCID?.toBytes());
     addNotNull(2, plaintextCID?.toBytes());
 
-    addNotNull(9, hashes?.map((e) => e.fullBytes).toList());
+    addNotNull(9, hashes?.map((e) => e.bytes).toList());
     addNotNull(10, thumbnail);
 
     return map;

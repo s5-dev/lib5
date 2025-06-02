@@ -6,6 +6,7 @@ import 'package:lib5/src/model/metadata/web_app.dart';
 import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/model/cid.dart';
 
+@Deprecated('use directories instead')
 WebAppMetadata deserializeWebAppMetadata(Uint8List bytes) {
   final u = Unpacker(bytes);
 

@@ -16,7 +16,7 @@ class RegistryService {
   RegistryService(this.node, {required this.db});
 
   Future<void> set(
-    SignedRegistryEntry sre, {
+    RegistryEntry sre, {
     bool trusted = false,
     Peer? receivedFrom,
     Route? route,
@@ -77,7 +77,7 @@ class RegistryService {
   // TODO Clean this table after some time
   // TODO final registryUpdateRoutingTable = <String, List<String>>{};
   // TODO if there are more than X peers, only broadcast to subscribed nodes (routing table) and shard-nodes (256)
-  void broadcastEntry(SignedRegistryEntry sre, Peer? receivedFrom) {
+  void broadcastEntry(RegistryEntry sre, Peer? receivedFrom) {
     node.logger.verbose('[registry] broadcastEntry');
     final updateMessage = sre.serialize();
 
@@ -112,10 +112,10 @@ class RegistryService {
     }
   }
 
-  final streams = <Multihash, StreamController<SignedRegistryEntry>>{};
+  final streams = <Multihash, StreamController<RegistryEntry>>{};
   final subs = <Multihash>{};
 
-  Future<SignedRegistryEntry?> get(Uint8List pk, {Route? route}) async {
+  Future<RegistryEntry?> get(Uint8List pk, {Route? route}) async {
     final key = Multihash(pk);
     if (subs.contains(key)) {
       node.logger.verbose('[registry] get (subbed) $key');
@@ -130,7 +130,7 @@ class RegistryService {
       sendRegistryRequest(pk);
       subs.add(key);
       if (!streams.containsKey(key)) {
-        streams[key] = StreamController<SignedRegistryEntry>.broadcast();
+        streams[key] = StreamController<RegistryEntry>.broadcast();
       }
       if (getFromDB(pk) == null) {
         node.logger.verbose('[registry] get (clean) $key');
@@ -146,18 +146,18 @@ class RegistryService {
     }
   }
 
-  Stream<SignedRegistryEntry> listen(Uint8List pk, {Route? route}) {
+  Stream<RegistryEntry> listen(Uint8List pk, {Route? route}) {
     final key = Multihash(pk);
     if (!streams.containsKey(key)) {
-      streams[key] = StreamController<SignedRegistryEntry>.broadcast();
+      streams[key] = StreamController<RegistryEntry>.broadcast();
       sendRegistryRequest(pk);
     }
     return streams[key]!.stream;
   }
 
-  SignedRegistryEntry? getFromDB(Uint8List pk) {
+  RegistryEntry? getFromDB(Uint8List pk) {
     if (db.contains(pk)) {
-      return SignedRegistryEntry.deserialize(db.get(pk)!);
+      return RegistryEntry.deserialize(db.get(pk)!);
     }
     return null;
   }

@@ -1,4 +1,4 @@
-library lib5;
+library;
 
 export 'src/model/cid.dart';
 export 'src/model/encrypted_cid.dart';

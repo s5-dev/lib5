@@ -1,5 +1,7 @@
 import 'dart:typed_data';
 
+import 'package:lib5/src/identifier/blob.dart';
+import 'package:lib5/src/identifier/directory.dart';
 import 'package:mime/mime.dart';
 
 import 'package:lib5/lib5.dart';
@@ -162,7 +164,8 @@ class FileSystem {
 
   // TODO Open file (stream) openRead
 
-  Future<CID> createSnapshot(String path, {bool encrypted = true}) async {
+  Future<DirectoryIdentifier> createSnapshot(String path,
+      {bool encrypted = true}) async {
     final ks = await getKeySet(parseURI(
       await _preprocessLocalPath(path),
     ));
@@ -191,8 +194,8 @@ class FileSystem {
           '$path/$dirName',
           encrypted: encrypted,
         ))
-            .hash
-            .fullBytes,
+            .key
+            .bytes,
         encryptionKey: dir.encryptionKey,
       );
     }
@@ -200,32 +203,25 @@ class FileSystem {
     if (encrypted) {
       // TODO Make snapshots deterministic in a secure way
       // final key = deriveHashBlake3(base, tweak, crypto: _api.crypto);
-      final key = _api.crypto.generateRandomBytes(32);
+      final key = _api.crypto.generateSecureRandomBytes(32);
 
+      // TODO migrate encryption to prefix-free format
+      // ignore: deprecated_member_use_from_same_package
       final bytes = await encryptMutableBytes(
         staticDir.serialize(),
         key,
         crypto: _api.crypto,
       );
-      final cid = await _api.uploadBlob(bytes);
+      final cid = await _api.uploadBlobAsBytes(bytes);
 
-      return CID(
-        cidTypeMetadataDirectory,
-        Multihash(
-          Uint8List.fromList(
-            <int>[
-                  cidTypeEncryptedMutable,
-                  encryptionAlgorithmXChaCha20Poly1305
-                ] +
-                key +
-                cid.hash.fullBytes,
-          ),
-        ),
+      return DirectoryIdentifier.encryptedXChaCha20Poly1305(
+        key,
+        cid.hash,
       );
     } else {
-      final cid = await _api.uploadBlob(staticDir.serialize());
+      final blobId = await _api.uploadBlobAsBytes(staticDir.serialize());
 
-      return CID(cidTypeMetadataDirectory, cid.hash);
+      return DirectoryIdentifier(blobId.hash);
     }
   }
 
@@ -254,6 +250,8 @@ class FileSystem {
 
       // TODO Make sure this is secure
       final newBytes = ks.encryptionKey != null
+          // TODO migrate encryption to prefix-free format
+          // ignore: deprecated_member_use_from_same_package
           ? await encryptMutableBytes(
               transactionRes.serialize(),
               ks.encryptionKey!,
@@ -261,13 +259,13 @@ class FileSystem {
             )
           : transactionRes.serialize();
 
-      final cid = await _api.uploadBlob(newBytes);
+      final cid = await _api.uploadBlobAsBytes(newBytes);
 
       final kp = await _api.crypto.newKeyPairEd25519(seed: ks.writeKey!);
 
-      final sre = await SignedRegistryEntry.create(
+      final sre = await RegistryEntry.create(
         kp: kp,
-        data: cid.toRegistryEntry(),
+        data: cid.hashBytes,
         revision: (dir?.$2?.revision ?? 0) + 1,
         crypto: _api.crypto,
       );
@@ -317,7 +315,7 @@ class FileSystem {
     return dir;
   }
 
-  // TODO Handle Errors for missing files
+  // TODO Error handling
   Future<FileReference> getFileReference(String path) async {
     final pathSegments = path.split('/');
     final dir = await listDirectory(
@@ -326,12 +324,15 @@ class FileSystem {
     return dir!.files[pathSegments.last]!;
   }
 
-  Future<(DirectoryMetadata, SignedRegistryEntry?)?> _getDirectoryMetadata(
+  Future<(DirectoryMetadata, RegistryEntry?)?> _getDirectoryMetadata(
       KeySet ks) async {
-    SignedRegistryEntry? entry;
+    RegistryEntry? entry;
 
     final Multihash multihash;
-    if (ks.publicKey[0] == mhashBlake3Default) {
+    // ignore: deprecated_member_use_from_same_package
+    if (ks.publicKey[0] == mhashBlake3Default ||
+        ks.publicKey[0] == mhashBlake3) {
+      ks.publicKey[0] = mhashBlake3;
       multihash = Multihash(ks.publicKey);
     } else {
       entry = await _api.registryGet(ks.publicKey);
@@ -340,21 +341,30 @@ class FileSystem {
       if (entry == null) return null;
 
       final data = entry.data;
-      if (data[0] != registryS5CIDByte) throw FormatException();
-      if (data[1] != cidTypeRaw && data[1] != cidTypeMetadataDirectory) {
-        throw FormatException();
-      }
+      // ignore: deprecated_member_use_from_same_package
+      if (data[0] == mhashBlake3 || data[0] == mhashBlake3Default) {
+        multihash = Multihash(
+          data.sublist(0, 33),
+        );
+      } else {
+        // this line is for reading directories encoded using the old format
+        if (data[0] != 0x5a) throw FormatException();
 
-      multihash = Multihash(
-        data.sublist(2, 35),
-      );
+        multihash = Multihash(
+          data.sublist(2, 35),
+        );
+      }
+      // ignore: deprecated_member_use_from_same_package
+      multihash.fullBytes[0] = mhashBlake3;
     }
-    final metadataBytes = await _api.downloadRawFile(multihash);
+    final metadataBytes = await _api.downloadBlobAsBytes(multihash);
 
     if (metadataBytes[0] == 0x8d) {
       if (ks.encryptionKey == null) {
         throw MissingEncryptionKeyException();
       }
+      // TODO migrate encryption to prefix-free format
+      // ignore: deprecated_member_use_from_same_package
       final decryptedMetadataBytes = await decryptMutableBytes(
         metadataBytes,
         ks.encryptionKey!,
@@ -379,7 +389,7 @@ class FileSystem {
 
   Future<String> _buildRootWriteURI() async {
     if (_identity == null) throw NoIdentityException();
-    final filesystemRootKey = deriveHashBlake3Int(
+    final filesystemRootKey = deriveHashInt(
       _identity!.fsRootKey,
       1,
       crypto: _api.crypto,
@@ -391,7 +401,7 @@ class FileSystem {
             .publicKey;
 
     // ? BLAKE3 is a cryptographic hash function, so this derivation is irreversible
-    final rootEncryptionKey = deriveHashBlake3Int(
+    final rootEncryptionKey = deriveHashInt(
       filesystemRootKey,
       _encryptionKeyTweak,
       crypto: _api.crypto,
@@ -408,10 +418,10 @@ class FileSystem {
     return 'fs5://write:$rootWriteKey@${rootCID.toBase32()}';
   }
 
-  Future<CID> getDirectoryCID(String path) async {
+  Future<DirectoryIdentifier> getDirectoryCID(String path) async {
     final keySet = await getKeySet(parseURI(await _preprocessLocalPath(path)));
     if (keySet.encryptionKey == null) {
-      return CID(cidTypeMetadataDirectory, Multihash(keySet.publicKey));
+      return DirectoryIdentifier(Multihash(keySet.publicKey));
     }
     final rootCID =
         _buildEncryptedDirectoryCID(keySet.publicKey, keySet.encryptionKey!);
@@ -420,19 +430,13 @@ class FileSystem {
 
   /// publicKey: 33 bytes (with multicodec prefix byte)
   /// encryptionKey: 32 bytes
-  CID _buildEncryptedDirectoryCID(
+  DirectoryIdentifier _buildEncryptedDirectoryCID(
     Uint8List publicKey,
     Uint8List encryptionKey,
   ) {
-    return CID(
-      cidTypeMetadataDirectory,
-      Multihash(
-        Uint8List.fromList(
-          <int>[cidTypeEncryptedMutable, encryptionAlgorithmXChaCha20Poly1305] +
-              encryptionKey +
-              publicKey,
-        ),
-      ),
+    return DirectoryIdentifier.encryptedXChaCha20Poly1305(
+      encryptionKey,
+      MultiKeyOrHash(publicKey),
     );
   }
 
@@ -440,11 +444,11 @@ class FileSystem {
     String name,
     Uint8List writeKey,
   ) async {
-    final newWriteKey = _api.crypto.generateRandomBytes(32);
+    final newWriteKey = _api.crypto.generateSecureRandomBytes(32);
 
     final ks = await _deriveKeySetFromWriteKey(newWriteKey);
 
-    final encryptionNonce = _api.crypto.generateRandomBytes(24);
+    final encryptionNonce = _api.crypto.generateSecureRandomBytes(24);
 
     final encryptedWriteKey = await _api.crypto.encryptXChaCha20Poly1305(
       key: writeKey,
@@ -471,9 +475,9 @@ class FileSystem {
   Future<KeySet> _deriveKeySetFromWriteKey(Uint8List writeKey) async {
     final publicKey =
         (await _api.crypto.newKeyPairEd25519(seed: writeKey)).publicKey;
-    final encryptionKey = deriveHashBlake3Int(
+    final encryptionKey = deriveHashInt(
       writeKey,
-      _encryptionKeyTweak,
+      0x5e,
       crypto: _api.crypto,
     );
     return KeySet(
@@ -487,11 +491,14 @@ class FileSystem {
     return Uri.parse(uri);
   }
 
+  final _keySetCache = <Uri, KeySet>{};
+
   // TODO Maybe create a KeySet cache
   Future<KeySet> getKeySet(Uri uri) async {
+    if (_keySetCache.containsKey(uri)) return _keySetCache[uri]!;
+
     if (uri.pathSegments.isEmpty) {
-      final cid = CID.decode(uri.host);
-      if (cid.type != cidTypeMetadataDirectory) throw FormatException();
+      final dirId = DirectoryIdentifier.decode(uri.host);
 
       Uint8List? writeKey;
 
@@ -502,19 +509,29 @@ class FileSystem {
         writeKey = Multibase.decodeString(parts[1]).sublist(1);
       }
 
-      if (cid.hash.functionType == mkeyEd25519) {
+      if (dirId.key.type == mkeyEd25519) {
         // TODO Verify that writeKey matches
         return KeySet(
-          publicKey: cid.hash.fullBytes,
+          publicKey: dirId.key.bytes,
           writeKey: writeKey,
           encryptionKey: null,
         );
-      } else if (cid.hash.functionType == cidTypeEncryptedMutable) {
+      } else if (dirId.encrypted) {
         // TODO Verify that writeKey matches
         return KeySet(
-          publicKey: cid.hash.hashBytes.sublist(33),
+          publicKey: dirId.key.bytes,
           writeKey: writeKey,
-          encryptionKey: cid.hash.hashBytes.sublist(1, 33),
+          encryptionKey: dirId.encryptionKey,
+        );
+        // ignore: deprecated_member_use_from_same_package
+      } else if (dirId.key.type == mhashBlake3Default ||
+          dirId.key.type == mhashBlake3) {
+        final mhash = dirId.key.bytes;
+        mhash[0] = mhashBlake3;
+        return KeySet(
+          publicKey: mhash,
+          writeKey: writeKey,
+          encryptionKey: null,
         );
       }
     }
@@ -548,11 +565,14 @@ class FileSystem {
       );
     }
 
-    return KeySet(
+    final ks = KeySet(
       publicKey: dir.publicKey,
       writeKey: writeKey,
       encryptionKey: dir.encryptionKey,
     );
+
+    _keySetCache[uri] = ks;
+    return ks;
   }
 
   Future<FileVersion> uploadFilePlaintext({
@@ -563,12 +583,12 @@ class FileSystem {
       size: size,
       openRead: openRead,
     );
-    final hash = Multihash.blake3(b3hash);
-    final plaintextCID = CID.raw(hash, size: size);
 
-    final CID cid;
+    final plaintextCID = BlobIdentifier.blake3(b3hash, size);
+
+    final BlobIdentifier cid;
     if (size < (1024 * 1024)) {
-      cid = await _api.uploadBlob(
+      cid = await _api.uploadBlobAsBytes(
         Uint8List.fromList(
           await openRead().fold(
             <int>[],
@@ -577,8 +597,8 @@ class FileSystem {
         ),
       );
     } else {
-      cid = await _api.uploadRawFile(
-        hash: hash,
+      cid = await _api.uploadBlobWithStream(
+        hash: plaintextCID.hash,
         size: size,
         openRead: openRead,
       );
@@ -640,7 +660,7 @@ class KeySet {
 class HashMismatchException implements Exception {}
 
 class MissingWriteAccessException implements Exception {
-  factory MissingWriteAccessException([var message]) =>
+  factory MissingWriteAccessException([dynamic message]) =>
       MissingWriteAccessException(message);
 }
 

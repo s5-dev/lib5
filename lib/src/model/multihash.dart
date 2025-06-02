@@ -8,15 +8,17 @@ import 'package:lib5/src/util/base64.dart';
 import 'package:lib5/src/util/bytes.dart';
 
 class Multihash {
-  final Uint8List fullBytes;
+  final Uint8List bytes;
+  @Deprecated('use `bytes` instead')
+  Uint8List get fullBytes => bytes;
 
-  int get functionType => fullBytes[0];
-  Uint8List get hashBytes => fullBytes.sublist(1);
+  int get type => bytes[0];
+  Uint8List get value => bytes.sublist(1);
 
-  Multihash(this.fullBytes);
+  Multihash(this.bytes);
 
   factory Multihash.blake3(Uint8List hash) {
-    return Multihash(Uint8List.fromList([mhashBlake3Default] + hash));
+    return Multihash(Uint8List.fromList([mhashBlake3] + hash));
   }
 
   factory Multihash.fromBase64Url(String hash) {
@@ -28,18 +30,16 @@ class Multihash {
   }
 
   String toBase64Url() {
-    return base64UrlNoPaddingEncode(fullBytes);
+    return base64UrlNoPaddingEncode(bytes);
   }
 
   String toBase32() {
-    return base32Rfc.encode(fullBytes).replaceAll('=', '').toLowerCase();
+    return base32Rfc.encode(bytes).replaceAll('=', '').toLowerCase();
   }
 
   @override
   String toString() {
-    return functionType == cidTypeBridge
-        ? utf8.decode(fullBytes)
-        : toBase64Url();
+    return toBase64Url();
   }
 
   @override
@@ -47,14 +47,14 @@ class Multihash {
     if (other is! Multihash) {
       return false;
     }
-    return areBytesEqual(fullBytes, other.fullBytes);
+    return areBytesEqual(bytes, other.bytes);
   }
 
   @override
   int get hashCode {
-    return fullBytes[0] +
-        (fullBytes[1] * 256) +
-        (fullBytes[2] * 256 * 256) +
-        (fullBytes[3] * 256 * 256 * 256);
+    return bytes[0] +
+        (bytes[1] * 256) +
+        (bytes[2] * 256 * 256) +
+        (bytes[3] * 256 * 256 * 256);
   }
 }

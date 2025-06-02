@@ -1,9 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:lib5/src/crypto/base.dart';
-import 'package:lib5/src/model/cid.dart';
-import 'package:lib5/src/model/metadata/user_identity.dart';
-import 'package:lib5/src/model/multihash.dart';
 import 'package:s5_msgpack/s5_msgpack.dart';
 import 'package:lib5/src/constants.dart';
 import 'package:lib5/src/seed/seed.dart';
@@ -45,60 +42,6 @@ class S5UserIdentity {
     );
   }
 
-  /// Call this once when creating a new user identity on the network (sets up metadata and recovery mechanism)
-  static Future<void> createUserIdentity(
-    String seedPhrase, {
-    required CryptoImplementation crypto,
-  }) async {
-    final seedMap = await _generateSeedMapFromSeedPhrase(
-      seedPhrase,
-      full: true,
-      crypto: crypto,
-    );
-
-    final signingKeyPair = await crypto.newKeyPairEd25519(
-      seed: seedMap[signingKeyPairTweak]!,
-    );
-    final links = <int, CID>{};
-    for (int i = 0; i < 32; i++) {
-      final resolverKeyPair = await crypto.newKeyPairEd25519(
-        seed: deriveHashBlake3Int(
-          seedMap[resolverLinksTweak]!,
-          i,
-          crypto: crypto,
-        ),
-      );
-      links[i] = CID(cidTypeResolver, Multihash(resolverKeyPair.publicKey));
-    }
-
-    // ignore: unused_local_variable
-    final userIdentityMetadata = UserIdentityMetadata(
-      details: UserIdentityMetadataDetails(
-        created: (DateTime.now().millisecondsSinceEpoch / 1000).round(),
-        createdBy: 'lib5',
-      ),
-      signingKeys: [UserIdentityPublicKey(signingKeyPair.publicKey)],
-      encryptionKeys: [],
-      links: links,
-    );
-
-    /* final cid = await api.uploadBlob(
-      serializeUserIdentityMetadata(userIdentityMetadata),
-    );
-
-    final publicIdentityKeyPair = await api.crypto.newKeyPairEd25519(
-      seed: seedMap[publicIdentityTweak]!,
-    );
-
-    final sre = await signRegistryEntry(
-      kp: publicIdentityKeyPair,
-      data: cid.toRegistryEntry(),
-      revision: 0,
-      crypto: api.crypto,
-    );
-    await api.registrySet(sre); */
-  }
-
   static String generateSeedPhrase({required CryptoImplementation crypto}) {
     return generatePhrase(crypto: crypto);
   }
@@ -112,13 +55,13 @@ class S5UserIdentity {
 
     final seedBytes = crypto.hashBlake3Sync(seedEntropy);
 
-    final mainIdentitySeed = deriveHashBlake3Int(
+    final mainIdentitySeed = deriveHashInt(
       seedBytes,
       mainIdentityTweak,
       crypto: crypto,
     );
 
-    final publicIdentitySeed = deriveHashBlake3Int(
+    final publicIdentitySeed = deriveHashInt(
       mainIdentitySeed,
       publicIdentityTweak,
       crypto: crypto,
@@ -127,76 +70,76 @@ class S5UserIdentity {
     // Should be =floor( publicIdentityRevisionNumber / 1024 )
     final int keyRotationIndex = 0;
 
-    final publicSubSeed = deriveHashBlake3Int(
+    final publicSubSeed = deriveHashInt(
       publicIdentitySeed,
       keyRotationIndex,
       crypto: crypto,
     );
 
-    final privateDataSeed = deriveHashBlake3Int(
+    final privateDataSeed = deriveHashInt(
       mainIdentitySeed,
       privateDataTweak,
       crypto: crypto,
     );
 
-    final privateSubSeed = deriveHashBlake3Int(
+    final privateSubSeed = deriveHashInt(
       privateDataSeed,
       keyRotationIndex,
       crypto: crypto,
     );
 
     final subSeeds = <int, Uint8List>{
-      signingKeyPairTweak: deriveHashBlake3Int(
+      signingKeyPairTweak: deriveHashInt(
         publicSubSeed,
         signingKeyPairTweak,
         crypto: crypto,
       ),
-      encryptionKeyPairTweak: deriveHashBlake3Int(
+      encryptionKeyPairTweak: deriveHashInt(
         publicSubSeed,
         encryptionKeyPairTweak,
         crypto: crypto,
       ),
-      resolverLinksTweak: deriveHashBlake3Int(
+      resolverLinksTweak: deriveHashInt(
         publicSubSeed,
         resolverLinksTweak,
         crypto: crypto,
       ),
-      publicReservedTweak1: deriveHashBlake3Int(
+      publicReservedTweak1: deriveHashInt(
         publicSubSeed,
         publicReservedTweak1,
         crypto: crypto,
       ),
-      publicReservedTweak2: deriveHashBlake3Int(
+      publicReservedTweak2: deriveHashInt(
         publicSubSeed,
         publicReservedTweak2,
         crypto: crypto,
       ),
-      storageServiceAccountsTweak: deriveHashBlake3Int(
+      storageServiceAccountsTweak: deriveHashInt(
         privateSubSeed,
         storageServiceAccountsTweak,
         crypto: crypto,
       ),
-      hiddenDBTweak: deriveHashBlake3Int(
+      hiddenDBTweak: deriveHashInt(
         privateSubSeed,
         hiddenDBTweak,
         crypto: crypto,
       ),
-      fileSystemTweak: deriveHashBlake3Int(
+      fileSystemTweak: deriveHashInt(
         privateSubSeed,
         fileSystemTweak,
         crypto: crypto,
       ),
-      privateReservedTweak1: deriveHashBlake3Int(
+      privateReservedTweak1: deriveHashInt(
         privateSubSeed,
         privateReservedTweak1,
         crypto: crypto,
       ),
-      privateReservedTweak2: deriveHashBlake3Int(
+      privateReservedTweak2: deriveHashInt(
         privateSubSeed,
         privateReservedTweak2,
         crypto: crypto,
       ),
-      extensionTweak: deriveHashBlake3Int(
+      extensionTweak: deriveHashInt(
         privateSubSeed,
         extensionTweak,
         crypto: crypto,

@@ -2,15 +2,15 @@ import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:lib5/src/constants.dart';
+import 'package:lib5/src/identifier/blob.dart';
 import 'package:lib5/src/util/endian.dart';
 
-import 'cid.dart';
 import 'multihash.dart';
 import 'multibase.dart';
 
 class EncryptedCID extends Multibase {
   final Multihash encryptedBlobHash;
-  final CID originalCID;
+  final BlobIdentifier originalCID;
 
   final int encryptionAlgorithm;
 
@@ -35,6 +35,7 @@ class EncryptedCID extends Multibase {
       EncryptedCID.fromBytes(Multibase.decodeString(cid));
 
   factory EncryptedCID.fromBytes(Uint8List bytes) {
+    // ignore: deprecated_member_use_from_same_package
     if (bytes[0] != cidTypeEncryptedStatic) {
       throw 'Invalid CID type (${bytes[0]})';
     }
@@ -45,16 +46,19 @@ class EncryptedCID extends Multibase {
       encryptedBlobHash: Multihash(bytes.sublist(3, 36)),
       encryptionKey: bytes.sublist(36, 68),
       padding: decodeEndian(bytes.sublist(68, 72)),
-      originalCID: CID.fromBytes(bytes.sublist(72)),
+      originalCID: BlobIdentifier.fromBytes(bytes.sublist(72)),
     );
   }
 
+  // TODO Check if and how this matches the non-static encryption, like for FS5
+  // TODO Just use unauthenticated encryption :P blake3 is nicer
   @override
   Uint8List toBytes() {
     return Uint8List.fromList(
+      // ignore: deprecated_member_use_from_same_package
       [cidTypeEncryptedStatic, encryptionAlgorithm] +
           [chunkSizeAsPowerOf2] +
-          encryptedBlobHash.fullBytes +
+          encryptedBlobHash.bytes +
           encryptionKey +
           encodeEndian(padding, 4) +
           originalCID.toBytes(),

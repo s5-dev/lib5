@@ -1,7 +1,6 @@
 import 'dart:typed_data';
 
 import 'package:lib5/src/model/cid.dart';
-import 'package:lib5/src/model/multihash.dart';
 import 'package:s5_msgpack/s5_msgpack.dart';
 
 import 'package:lib5/src/constants.dart';
@@ -9,9 +8,9 @@ import 'package:lib5/src/crypto/base.dart';
 import 'package:lib5/src/model/metadata/media.dart';
 import 'package:lib5/src/model/metadata/parent.dart';
 import 'package:lib5/src/model/metadata/extra.dart';
-import 'package:lib5/src/util/endian.dart';
 import 'package:lib5/src/util/pack_anything.dart';
 
+@Deprecated('use directories instead')
 Future<MediaMetadata> deserializeMediaMetadata(
   Uint8List bytes, {
   required CryptoImplementation crypto,
@@ -24,58 +23,7 @@ Future<MediaMetadata> deserializeMediaMetadata(
 
   final Uint8List bodyBytes;
 
-  final provenPubKeys = <Multihash>[];
-
-  if (typeAndVersion == metadataTypeProofs) {
-    final proofSectionLength = decodeEndian(bytes.sublist(2, 4));
-
-    bodyBytes = bytes.sublist(4 + proofSectionLength);
-
-    if (proofSectionLength > 0) {
-      final proofUnpacker = Unpacker(bytes.sublist(4, proofSectionLength + 4));
-
-      final b3hash = Uint8List.fromList(
-        [mhashBlake3Default] + await crypto.hashBlake3(bodyBytes),
-      );
-
-      final proofCount = proofUnpacker.unpackListLength();
-
-      for (int i = 0; i < proofCount; i++) {
-        final List<dynamic> parts = proofUnpacker.unpackList();
-        final proofType = parts[0] as int;
-
-        if (proofType == metadataProofTypeSignature) {
-          final mhashType = parts[1] as int;
-          final pubkey = parts[2] as Uint8List;
-          final signature = parts[3] as Uint8List;
-
-          if (mhashType != mhashBlake3Default) {
-            throw 'Hash type $mhashType not supported';
-          }
-
-          if (pubkey[0] != mkeyEd25519) {
-            throw 'Only ed25519 keys are supported';
-          }
-          if (pubkey.length != 33) {
-            throw 'Invalid userId';
-          }
-
-          final isValid = await crypto.verifyEd25519(
-            message: b3hash,
-            signature: signature,
-            pk: pubkey.sublist(1),
-          );
-
-          if (!isValid) {
-            throw 'Invalid signature found';
-          }
-          provenPubKeys.add(Multihash(pubkey));
-        } else {
-          // ! Unsupported proof type
-        }
-      }
-    }
-  } else if (typeAndVersion == metadataTypeMedia) {
+  if (typeAndVersion == metadataTypeMedia) {
     bodyBytes = bytes.sublist(1);
   } else {
     throw 'Invalid metadata: Unsupported type $typeAndVersion';
@@ -107,7 +55,7 @@ Future<MediaMetadata> deserializeMediaMetadata(
       cid: cid,
       role: m[2] as String?,
       type: (m[0] ?? parentLinkTypeUserIdentity) as int,
-      signed: provenPubKeys.contains(cid.hash),
+      signed: false,
     ));
   }
 
@@ -137,6 +85,7 @@ Future<MediaMetadata> deserializeMediaMetadata(
   );
 }
 
+@Deprecated('use directories instead')
 Uint8List serializeMediaMetadata(
   MediaMetadata m,
   /* List<KeyPairEd25519> keyPairs = const [],

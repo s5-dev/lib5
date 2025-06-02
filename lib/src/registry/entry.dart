@@ -7,7 +7,7 @@ import 'package:lib5/src/util/endian.dart';
 import 'sign.dart';
 import 'verify.dart';
 
-class SignedRegistryEntry {
+class RegistryEntry {
   /// public key with multicodec prefix
   final Uint8List pk;
 
@@ -20,14 +20,14 @@ class SignedRegistryEntry {
   /// signature of this registry entry
   final Uint8List signature;
 
-  SignedRegistryEntry({
+  RegistryEntry({
     required this.pk,
     required this.revision,
     required this.data,
     required this.signature,
   });
 
-  static Future<SignedRegistryEntry> create({
+  static Future<RegistryEntry> create({
     required KeyPairEd25519 kp,
     required Uint8List data,
     required int revision,
@@ -49,9 +49,9 @@ class SignedRegistryEntry {
     ]);
   }
 
-  factory SignedRegistryEntry.deserialize(Uint8List event) {
+  factory RegistryEntry.deserialize(Uint8List event) {
     final dataLength = event[42];
-    return SignedRegistryEntry(
+    return RegistryEntry(
       pk: event.sublist(1, 34),
       revision: decodeEndian(event.sublist(34, 42)),
       data: event.sublist(43, 43 + dataLength),

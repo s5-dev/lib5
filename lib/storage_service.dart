@@ -1,4 +1,4 @@
-library lib5;
+library;
 
 export 'src/storage_service/config.dart';
 export 'src/storage_service/login.dart';

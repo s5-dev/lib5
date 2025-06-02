@@ -28,7 +28,7 @@ Future<ChallengeResponseS5> signChallenge({
   );
 
   final signatureBytes = await crypto.signEd25519(
-    kp: keyPair,
+    keyPair: keyPair,
     message: message,
   );
 

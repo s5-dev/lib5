@@ -68,7 +68,7 @@ class S5NodeBase {
     Multihash hash,
   ) {
     final Map<int, Map<NodeID, Map<int, dynamic>>> map = {};
-    final bytes = objectsBox.get(hash.fullBytes);
+    final bytes = objectsBox.get(hash.bytes);
     if (bytes == null) {
       return map;
     }
@@ -104,7 +104,7 @@ class S5NodeBase {
     };
 
     objectsBox.set(
-      hash.fullBytes,
+      hash.bytes,
       (Packer()..pack(map)).takeBytes(),
     );
   }
@@ -138,12 +138,9 @@ class S5NodeBase {
     return locations;
   }
 
-  Future<CID> uploadRawFile(Uint8List data) async {
-    throw UnimplementedError();
-  }
-
   final metadataCache = <Multihash, Metadata>{};
 
+  @Deprecated('this should be handled on the application layer')
   Future<Metadata> downloadMetadata(CID cid) async {
     final hash = cid.hash;
 
@@ -156,6 +153,7 @@ class S5NodeBase {
 
       if (cid.type == cidTypeMetadataMedia) {
         metadata = await deserializeMediaMetadata(bytes, crypto: crypto);
+        // TODO Remove WebAppMetadata, convert it to DirectoryMetadata (migration)
       } else if (cid.type == cidTypeMetadataWebApp) {
         metadata = deserializeWebAppMetadata(bytes);
       } else if (cid.type == cidTypeMetadataDirectory) {
@@ -189,7 +187,7 @@ class S5NodeBase {
             .get(Uri.parse(dlUri.location.bytesUrl))
             .timeout(Duration(seconds: 30)); // TODO Adjust timeout
 
-        if (hash.functionType == cidTypeBridge) {
+        if (hash.type == cidTypeBridge) {
           if (res.statusCode != 200) {
             throw 'HTTP ${res.statusCode}: ${res.body} for ${dlUri.location.bytesUrl}';
           }
@@ -197,7 +195,7 @@ class S5NodeBase {
         } else {
           final resHash = await crypto.hashBlake3(res.bodyBytes);
 
-          if (!areBytesEqual(hash.hashBytes, resHash)) {
+          if (!areBytesEqual(hash.value, resHash)) {
             throw 'Integrity verification failed';
           }
           dlUriProvider.upvote(dlUri);
