@@ -32,6 +32,7 @@ abstract class S5APIProvider {
     required Multihash hash,
     required int size,
     required OpenReadFunction openRead,
+    Function(double)? onProgress,
   });
 
   /// Downloads a full file blob to memory, you should only use this if they are smaller than 1 MB

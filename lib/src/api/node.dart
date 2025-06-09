@@ -29,10 +29,12 @@ class S5NodeAPI extends S5APIProvider {
   }
 
   @override
-  Future<BlobIdentifier> uploadBlobWithStream(
-      {required Multihash hash,
-      required int size,
-      required OpenReadFunction openRead}) {
+  Future<BlobIdentifier> uploadBlobWithStream({
+    required Multihash hash,
+    required int size,
+    required OpenReadFunction openRead,
+    Function(double)? onProgress,
+  }) {
     throw UnimplementedError();
   }
 

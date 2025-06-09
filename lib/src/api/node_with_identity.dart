@@ -9,6 +9,7 @@ import 'package:lib5/src/identifier/blob.dart';
 import 'package:lib5/src/identity/identity.dart';
 import 'package:lib5/src/model/multihash.dart';
 import 'package:lib5/src/model/node_id.dart';
+import 'package:lib5/src/upload/tus/client.dart';
 import 'package:lib5/storage_service.dart';
 import 'package:lib5/util.dart';
 
@@ -214,6 +215,29 @@ class S5NodeAPIWithIdentity extends S5NodeAPI {
       if (result) return blobId;
     }
     throw 'Could not upload raw file $services $results';
+  }
+
+  @override
+  Future<BlobIdentifier> uploadBlobWithStream({
+    required Multihash hash,
+    required int size,
+    required OpenReadFunction openRead,
+    Function(double)? onProgress,
+  }) async {
+    final firstServiceId = accountConfigs.keys.first;
+    final sc = accountConfigs[firstServiceId]!;
+
+    final tusClient = S5TusClient(
+      url: sc.getAPIUrl('/s5/upload/tus'),
+      fileLength: size,
+      headers: sc.headers,
+      hash: hash,
+      httpClient: httpClient,
+      openRead: openRead,
+    );
+    await tusClient.upload(onProgress: onProgress);
+
+    return BlobIdentifier(hash, size);
   }
 
   Future<bool> _uploadRawFileInternal(
